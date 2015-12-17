@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<info>
+    <id>snannyowncloudapi</id>
+    <name>Snanny Owncloud Api</name>
+    <description>My first ownCloud app</description>
+    <licence>AGPL</licence>
+    <author>Arnaud THOREL</author>
+    <version>0.0.5</version>
+    <namespace>SnannyOwncloudApi</namespace>
+    <category>other</category>
+    <dependencies>
+        <owncloud min-version="8" />
+    </dependencies>
+</info>
