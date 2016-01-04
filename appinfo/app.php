@@ -13,6 +13,7 @@ namespace OCA\SnannyOwncloudApi\AppInfo;
 
 use OCA\SnannyOwncloudApi\Controller\ApiController;
 use OCA\SnannyOwncloudApi\Controller\OmController;
+use OCA\SnannyOwncloudApi\Db\IndexHistoryMapper;
 use OCA\SnannyOwncloudApi\Db\ObservationModelMapper;
 use OCA\SnannyOwncloudApi\Db\SystemAncestorsMapper;
 use OCA\SnannyOwncloudApi\Db\SystemMapper;
@@ -45,7 +46,8 @@ class Application extends App{
              return new OmController(
                  $c->query('AppName'),
                  $c->query('Request'),
-                 $c->query('ObservationModelMapper'));
+                 $c->query('ObservationModelMapper'),
+                 $c->query('IndexHistoryMapper'));
          });
 
          /**Mappers**/
@@ -59,6 +61,9 @@ class Application extends App{
              return new ObservationModelMapper($c->query('ServerContainer')->getDb());
          });
 
+         $container->registerService('IndexHistoryMapper', function($c) {
+             return new IndexHistoryMapper($c->query('ServerContainer')->getDb());
+         });
 
          //Delegate Hook
          $container->registerService('DelegateOmHook', function($c){
@@ -87,3 +92,6 @@ class Application extends App{
 }
 $app = new Application();
 $app->getContainer()->query('FileHook')->register();
+
+$eventDispatcher = \OC::$server->getEventDispatcher();
+$eventDispatcher->addListener('OCA\Files::loadAdditionalScripts', ['OCA\SnannyOwncloudApi\Hooks', 'onLoadFilesAppScripts']);

@@ -171,7 +171,6 @@
                 <notnull>false</notnull>
                 <length>1</length>
             </field>
-
             <index>
                 <name>observation_model_uuid_index</name>
                 <unique>true</unique>
@@ -182,6 +181,58 @@
             </index>
         </declaration>
     </table>
+    <table>
+        <name>*dbprefix*snanny_observation_index_history</name>
+        <declaration>
+            <field>
+                <name>id</name>
+                <type>integer</type>
+                <default>0</default>
+                <notnull>true</notnull>
+                <autoincrement>1</autoincrement>
+                <length>11</length>
+            </field>
+            <field>
+                <name>uuid</name>
+                <type>text</type>
+                <notnull>false</notnull>
+                <length>60</length>
+            </field>
+            <field>
+                <name>file_id</name>
+                <type>integer</type>
+                <notnull>true</notnull>
+                <length>11</length>
+            </field>
+            <field>
+                <name>time</name>
+                <type>integer</type>
+                <notnull>true</notnull>
+                <length>11</length>
+            </field>
+            <field>
+                <name>status</name>
+                <type>integer</type>
+                <default>1</default>
+                <notnull>false</notnull>
+                <length>1</length>
+            </field>
+            <field>
+                <name>message</name>
+                <type>text</type>
+                <notnull>false</notnull>
+                <length>3000</length>
+            </field>
+            <field>
+                <name>indexed_observations</name>
+                <type>integer</type>
+                <notnull>false</notnull>
+                <length>11</length>
+            </field>
+        </declaration>
+    </table>
+
+
     <table>
         <name>*dbprefix*snanny_observation_result</name>
         <declaration>

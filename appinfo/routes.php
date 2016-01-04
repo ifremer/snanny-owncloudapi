@@ -23,6 +23,7 @@ return [
         ['name' => 'api#index', 'url' => '/', 'verb' => 'GET'],
         //Batch get files and content
         ['name' => 'api#files', 'url' => '/files', 'verb' => 'GET'],
+        ['name' => 'api#lastfailure', 'url' => '/lastfailure', 'verb' => 'GET'],
         ['name' => 'api#content', 'url' => '/content', 'verb' => 'GET'],
 
         //Public sensorML
@@ -32,9 +33,9 @@ return [
         ['name' => 'api#downloadSensorML', 'url' => '/sml/{uuid}/download', 'verb' => 'GET'],
 
         //Get OM Informations
-        ['name' => 'om#index', 'url' => '/om/{uuid}', 'verb' => 'GET'],
+        ['name' => 'om#updateIndex', 'url' => '/om', 'verb' => 'POST'],
         ['name' => 'om#info', 'url' => '/om/{uuid}/info', 'verb' => 'GET'],
-        ['name' => 'om#detail', 'url' => '/om/{uuid}/detail', 'verb' => 'GET'],
+
 
         //Download data
         ['name' => 'api#downloadData', 'url'=>'/omresult/{omid}', 'verb'=>'GET'],

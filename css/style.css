@@ -1,3 +1,8 @@
-#hello {
-	color: red;
+.history th{
+	padding: 5px 15px;
+	font-weight: bold;
+}
+
+.history td{
+	padding: 2px 15px;
 }

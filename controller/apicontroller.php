@@ -65,6 +65,26 @@ class ApiController extends Controller
         return new JSONResponse($entities);
     }
 
+
+    /**
+     * get lasts modified files using query
+     * from : From Date
+     * to : To date
+     * exts : file extensions
+     * @NoCSRFRequired
+     */
+    public function lastfailure()
+    {
+        $result = ActivityDao::findDistinctIdsFailed();
+        if ($result) {
+            while ($row = $result->fetch()) {
+                $entities[] = $row;
+            }
+        }
+        return new JSONResponse($entities);
+    }
+
+
     /**
      * get file content from file_id
      * @NoCSRFRequired
@@ -179,12 +199,17 @@ class ApiController extends Controller
     public function infoSML($uuid)
     {
         $data = array();
-        $system = $this->systemMapper->getByUuid($uuid);
+        $system = $this->systemMapper->getByIdOrUuid($uuid, $uuid);
         if ($system !== null) {
             $data['uuid'] = $system->getUuid();
             $data['name'] = trim($system->getName());
             $data['description'] = trim($system->getDescription());
-            $data['ancestors'] = $this->ancestorsMapper->getAncestors($uuid);
+            $ancestors = $this->ancestorsMapper->getAncestorsWithName($system->getUuid());
+            $data['hasAncestors'] = ($ancestors != null);
+            $data['ancestors'] = $ancestors;
+            $children = $this->ancestorsMapper->getChildren($system->getUuid());
+            $data['children'] = $children;
+            $data['hasChildren'] = ($children != null);
         }
         return new JSONResponse($data);
     }

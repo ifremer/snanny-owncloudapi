@@ -43,6 +43,40 @@ class SystemAncestorsMapper extends Mapper
         }
     }
 
+    public function getAncestorsWithName($smlUuid, array &$ancestors)
+    {
+        try {
+            $sql = 'SELECT * FROM *PREFIX*snanny_system_ancestors WHERE child_uuid = :uuid';
+            $result = DBUtil::executeQuery($sql, array(':uuid'=>$smlUuid));
+            if($result != null) {
+                if ($row = $result->fetch()) {
+                    $this->getAncestorsWithName($row['parent_uuid'], $ancestors);
+                    $ancestors[]=array('uuid'=>$row['parent_uuid'], 'name'=>$row['parent_name']);
+                }
+            }
+            return $ancestors;
+        } catch (DoesNotExistException $e) {
+            return null;
+        }
+    }
+
+
+    public function getChildren($smlUuid)
+    {
+        try {
+            $sql = 'SELECT * FROM *PREFIX*snanny_system_ancestors WHERE parent_uuid = :uuid';
+            $result = DBUtil::executeQuery($sql, array(':uuid'=>$smlUuid));
+            if($result != null) {
+                while($row = $result->fetch()) {
+                    $children[]=array('uuid'=>$row['child_uuid'], 'name'=>$row['component_name']);
+                }
+            }
+            return $children;
+        } catch (DoesNotExistException $e) {
+            return null;
+        }
+    }
+
     public function deleteChildren($parentUuid){
         $sql = 'DELETE FROM *PREFIX*snanny_system_ancestors WHERE parent_uuid = :uuid';
         DBUtil::executeQuery($sql, array(':uuid'=>$parentUuid));
