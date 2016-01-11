@@ -46,7 +46,7 @@ class ApiController extends Controller
     public function index($nodeId, $shareType)
     {
         DelegateOmHook::updateShare($nodeId, $shareType);
-        return new JSONResponse(['data' => ['message' => 'please refine your request']]);
+        return new JSONResponse(['info' => 'snanny-owncloud-api is up']);
     }
 
 
