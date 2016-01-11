@@ -2,6 +2,7 @@
 
 namespace OCA\SnannyOwncloudApi\Hooks;
 
+use OCA\SnannyOwncloudApi\Db\DBUtil;
 use OCA\SnannyOwncloudApi\Db\ObservationModel;
 use OCA\SnannyOwncloudApi\Db\ObservationModelMapper;
 use OCA\SnannyOwncloudApi\Parser\OMParser;
@@ -37,6 +38,7 @@ class DelegateOmHook
         $observation->setStatus(true);
         $observation->setSystemUuid($parsed['system-uuid']);
         $observation->setResultFile($parsed['result-file']);
+        $observation->setTimestamp(time());
 
         if ($insert === true) {
             $this->omMapper->insert($observation);
@@ -50,7 +52,40 @@ class DelegateOmHook
         $observation = $this->omMapper->getByFileId($node->getId());
         if ($observation != null) {
             $observation->setStatus(false);
+            $observation->setTimestamp(time());
             $this->omMapper->update($observation);
+        }
+    }
+
+    public static function onShare($params){
+        self::updateShare($params['itemSource'], $params['shareType']);
+    }
+
+    public static function onUnshare($params){
+        self::updateShare($params['itemSource'], -1);
+    }
+
+    public static function updateShare($nodeId, $shareType){
+        $obs = DBUtil::executeQuery('SELECT * FROM *PREFIX*snanny_observation_model WHERE file_id = ?', array($nodeId));
+        while($row = $obs->fetch()) {
+            if ($row != null) {
+                $shared = 1;
+                $sharedTime = time();
+                if ($shareType == -1) {
+                    //When unshare we check if there is still an existing share
+                    $result = DBUtil::executeQuery('SELECT COUNT(*) as c FROM *PREFIX*share WHERE file_source = ?', array($nodeId));
+                    $value = 0;
+                    while ($row = $result->fetch()) {
+                        $value = $row['c'];
+                    }
+                    //If there is no share then we passed the status to unshared
+                    if ($value == 0) {
+                        $shared = 0;
+                    }
+                }
+                //DBUpdate
+                DBUtil::executeQuery("UPDATE *PREFIX*snanny_observation_model SET shared = $shared, share_updated_time = $sharedTime WHERE file_id=?", array($nodeId));
+            }
         }
     }
 

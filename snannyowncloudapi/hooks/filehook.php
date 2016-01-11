@@ -51,32 +51,35 @@ class FileHook
             }
         });
 
+
+
         //Si la version d'owncloud est suffisante chargement uniquement dans les cas nécessaires
-        if(method_exists(\OC::$server, 'getEventDispatcher')){
+        if (method_exists(\OC::$server, 'getEventDispatcher')) {
             $eventDispatcher = \OC::$server->getEventDispatcher();
-            $eventDispatcher->addListener('OCA\Files::loadAdditionalScripts', 
+            $eventDispatcher->addListener('OCA\Files::loadAdditionalScripts',
                 ['OCA\SnannyOwncloudApi\Hooks\FileHook', "onLoadFilesAppScripts"]);
-        }else{
+        } else {
             //Sinon chargement indifférent du script js
             onLoadFilesAppScripts();
         }
-
-
-
     }
 
-    function endsWith($haystack, $needle) {
+    function endsWith($haystack, $needle)
+    {
         // search forward starting from end minus needle length characters
         return $needle === "" || (($temp = strlen($haystack) - strlen($needle)) >= 0 && strpos($haystack, $needle, $temp) !== FALSE);
     }
 
-        /**
+    /**
      * Load additional scripts when the files app is visible
      */
-    public static function onLoadFilesAppScripts() {        
+    public static function onLoadFilesAppScripts()
+    {
         Util::addScript('snannyowncloudapi', 'tabview');
         Util::addScript('snannyowncloudapi', 'filesplugin');
         Util::addStyle('snannyowncloudapi', 'style');
     }
+
+
 
 }

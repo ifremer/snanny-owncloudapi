@@ -14,6 +14,9 @@ class ObservationModel extends Entity
     protected $status;
     protected $systemUuid;
     protected $resultFile;
+    protected $shared;
+    protected $shareUpdatedTime;
+    protected $timestamp;
 
     public function __construct()
     {

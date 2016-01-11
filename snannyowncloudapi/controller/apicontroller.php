@@ -13,9 +13,11 @@ namespace OCA\SnannyOwncloudApi\Controller;
 
 use OC\AppFramework\Http;
 use OC\Files\Cache;
+use OC\Share\Share;
 use OCA\SnannyOwncloudApi\Db\ActivityDao;
 use OCA\SnannyOwncloudApi\Db\FileCacheDao;
 use OCA\SnannyOwncloudApi\Db\SystemAncestorsMapper;
+use OCA\SnannyOwncloudApi\Hooks\DelegateOmHook;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -41,9 +43,10 @@ class ApiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function index()
+    public function index($nodeId, $shareType)
     {
-        return new JSONResponse(['data' => ['message' => 'snannyowncloudapi index refine your request']]);
+        DelegateOmHook::updateShare($nodeId, $shareType);
+        return new JSONResponse(['data' => ['message' => 'please refine your request']]);
     }
 
 
@@ -96,8 +99,10 @@ class ApiController extends Controller
         $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
         //Get content
         $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
+        // Get shares
+        $shares = Share::getAllSharesForFileId($id);
         // Return json data
-        return new JSONResponse(array('user' => $fileInfo['user'], 'content' => $content, 'path' => $cacheInfo['path']));
+        return new JSONResponse(array('user' => $fileInfo['user'], 'content' => $content, 'path' => $cacheInfo['path'], 'shares'=>$shares));
     }
 
 

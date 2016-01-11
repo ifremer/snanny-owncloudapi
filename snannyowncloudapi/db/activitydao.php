@@ -18,22 +18,17 @@ class ActivityDao
 
     public static function findDistinctIds($from, $to)
     {
-        $sql = 'SELECT ac.object_id, ac.file, ac.user, ac.type FROM *PREFIX*activity ac INNER JOIN *PREFIX*snanny_observation_model om ON ac.object_id = om.file_id ' .
-            'WHERE type LIKE :type AND timestamp between :from AND :to
-            AND object_type = :object_type';
-        $sql .= ' ORDER BY object_id ASC, timestamp DESC';
-
+        $sql = 'SELECT * FROM *PREFIX*snanny_observation_model om' .
+            ' WHERE (om.timestamp between :from AND :to) OR (om.share_updated_time between :from AND :to)';
         return DBUtil::executeQuery($sql,
             array(':from' => $from,
                 ':to' => $to,
-                ':type' => 'file%',
-                ':object_type' => 'files'
             ));
     }
 
     public static function findDistinctIdsFailed()
     {
-        $sql = 'SELECT * FROM *PREFIX*snanny_observation_model model '.
+        $sql = 'SELECT model.* FROM *PREFIX*snanny_observation_model model '.
                 'INNER JOIN('.
                     'SELECT his.uuid '.
                     'FROM *PREFIX*snanny_observation_index_history his '.
