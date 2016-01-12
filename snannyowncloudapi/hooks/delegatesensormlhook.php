@@ -8,6 +8,7 @@ use OCA\SnannyOwncloudApi\Db\System;
 use OCA\SnannyOwncloudApi\Db\SystemAncestor;
 use OCA\SnannyOwncloudApi\Db\SystemAncestorsMapper;
 use OCA\SnannyOwncloudApi\Db\SystemMapper;
+use OCA\SnannyOwncloudApi\Parser\SensorMLParser;
 
 class DelegateSensorMLHook
 {
@@ -22,27 +23,18 @@ class DelegateSensorMLHook
 
     public function onUpdateOrCreate($node)
     {
-        $xml = new \SimpleXMLElement($node->getContent());
-
-        $sml = $xml->children(SML_NAMESPACE);
-        if ($sml != null) {
-            $uuid = $sml->identification->IdentifierList->identifier->Term->value;
-
-            $gml = $xml->children(GML_NAMESPACE);
-            $name = trim($gml->name);
-            $desc = trim($gml->description);
-            $smlComponents = $sml->components;
+        $sml = SensorMLParser::parse($node->getContent());
+        if($sml['uuid']) {
+            $uuid = $sml['uuid'];
             $this->systemAncestorsMapper->deleteChildren($uuid);
-            if ($smlComponents != null) {
-                $arr = $smlComponents->ComponentList;
-                foreach ($arr->component as $component) {
+            if ($sml['components']) {
+                foreach ($sml['components'] as $component) {
                     $systemAncestor = new SystemAncestor();
-                    $systemAncestor->setParentUuid($uuid);
-                    $systemAncestor->setParentName($name);
-                    $systemAncestor->setComponentName(trim($component->attributes()->name));
+                    $systemAncestor->setParentUuid($sml['uuid']);
+                    $systemAncestor->setParentName($sml['name']);
+                    $systemAncestor->setComponentName($component['name']);
                     $systemAncestor->setStatus(true);
-                    $childRef = $component->attributes(XLINK_NAMESPACE)->href;
-                    $systemAncestor->setChildUuid(basename($childRef, ".xml"));
+                    $systemAncestor->setChildUuid($component['uuid']);
                     $this->systemAncestorsMapper->insert($systemAncestor);
                 }
             }
@@ -55,8 +47,8 @@ class DelegateSensorMLHook
             }
 
             $system->setUuid($uuid);
-            $system->setName($name);
-            $system->setDescription($desc);
+            $system->setName($sml['name']);
+            $system->setDescription($sml['desc']);
             $system->setFileId($node->getId());
             $system->setStatus(true);
             if ($insert === true) {

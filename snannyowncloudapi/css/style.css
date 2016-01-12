@@ -6,3 +6,11 @@
 .history td{
 	padding: 2px 15px;
 }
+
+.snannyowncloudapi a{
+	text-decoration: underline;
+}
+
+.snannyowncloudapi #detail{
+	margin-left: 15px;
+}

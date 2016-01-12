@@ -26,11 +26,12 @@
 
 	var TEMPLATE_ITEM_OM =
 		'<li><b>Uuid :</b> {{uuid}}</li>'
-		+'<li><b>System :</b> {{systemUuid}}</li>'
 		+'<li><b>Name :</b> {{name}}</li>'
 		+'<li><b>Description :</b> {{description}}</li>'
 		+'<li><b>ResultFile :</b> {{resultFile}}</li>'
-		+'<li><br/><b>Index history :</b></li>'
+		+'<li><b>System :</b> <a id="system_uuid">{{systemUuid}}</a></li>'
+		+'<li id="detail" class="hidden">'
+		+'<li><br/><hr/><b>Index history :</b></li>'
 		+'<li class="index"><table class="history"><thead><th>Date</th><th>Status</th><th>IndexedObservations</th></thead>'
 		+'<tbody>{{#list index_history}}<tr><td>{{time}}</td><td>{{status}}</td><td>{{indexedObservations}}</td></tr>'
 		+'<tr><td colspan="3">{{message}}</td></tr>'
@@ -40,6 +41,14 @@
 	var TEMPLATE_ITEM_SML =
 		'<li><b>Uuid :</b> {{uuid}}</li>'
 		+'<li><b>Name :</b> {{name}}</li>'
+		+'<li><b>Description :</b> {{description}}</li>'
+		+'<li class="ancestors"><br/><b>Ancestors : </b><table class="history"><thead><th>Name</th><th>Uuid</th></thead>'
+		+'<tbody>{{#list ancestors}}<tr><td>{{name}}</td><td>{{uuid}}</td></tr>{{/list}}</tbody></table></li>'
+		+'<li class="children"><br/><b>Chlidren : </b>'
+		+'<table class="history"><thead><th>Name</th><th>Uuid</th></thead>'
+		+'<tbody>{{#list children}}<tr><td>{{name}}</td><td>{{uuid}}</td></tr>{{/list}}</tbody></table></li>';
+
+	var TEMPLATE_SUB_ITEM_SML = '<li><b>Name :</b> {{name}}</li>'
 		+'<li><b>Description :</b> {{description}}</li>'
 		+'<li class="ancestors"><br/><b>Ancestors : </b><table class="history"><thead><th>Name</th><th>Uuid</th></thead>'
 		+'<tbody>{{#list ancestors}}<tr><td>{{name}}</td><td>{{uuid}}</td></tr>{{/list}}</tbody></table></li>'
@@ -63,20 +72,20 @@
 		className: 'tab observationTabView',
 
 		_template: null,
-
+		_itemTemplateSML: null,
+		_itemTemplateOM: null,
+		_itemTemplateDetailSML: null,
 		$snannyContainer: null,
 
 		_fileId:null,
-
 		_info:null,
-
 		_this:null,
-
 		_type:null,
 
 
 		initialize: function() {
 			OCA.Files.DetailTabView.prototype.initialize.apply(this, arguments);
+			//Keep context
 			_this = this;
 		},
 
@@ -106,6 +115,14 @@
 			}
 
 			return this._itemTemplateSML(data);
+		},
+
+		itemTemplateDetailSML: function(data) {
+			if (!this._itemTemplateDetailSML) {
+				this._itemTemplateDetailSML = Handlebars.compile(TEMPLATE_SUB_ITEM_SML);
+			}
+
+			return this._itemTemplateDetailSML(data);
 		},
 
 		setFileInfo: function(fileInfo) {
@@ -146,6 +163,14 @@
 					this.$snannyContainer.html(this.itemTemplateOM(_info));
 					this.$snannyContainer.find('.index').toggleClass('hidden', !_info.indexed);
 					this.$snannyContainer.find('.noIndex').toggleClass('hidden', _info.indexed);
+					this.$snannyContainer.find('#system_uuid').click(function(){
+						var detail = _this.$snannyContainer.find('#detail');
+						if(detail.html() == ''){
+							_this.showDetails(_info.systemUuid);
+						}else{
+							detail.slideToggle(500);
+						}
+					});
 				} else {
 					this.$snannyContainer.html(this.itemTemplateSML(_info));
 					this.$snannyContainer.find('.children').toggleClass('hidden', !_info.hasChildren);
@@ -193,7 +218,34 @@
 		_toggleEmpty : function(state) {
 			this._empty = state;
 			this.$el.find('.empty').toggleClass('hidden', state);
+		},
+
+		showDetails : function(sml){
+			urlGen = OC.generateUrl('/apps/snannyowncloudapi/sml/'+sml+'/info');
+			$.ajax({
+				type: 'GET',
+				url: urlGen,
+				dataType: 'json',
+				success: function(response) {
+					var detail = _this.$snannyContainer.find('#detail');
+					if(response.uuid){
+						detail.html(_this.itemTemplateDetailSML(response));
+						detail.find('.children').toggleClass('hidden', !response.hasChildren);
+						detail.find('.ancestors').toggleClass('hidden', !response.hasAncestors);
+					}else{
+						detail.html("SML Not found in owncloud, ensure that the file exists and ends with sensorML.xml");
+					}
+					detail.slideToggle(500);
+
+				},
+				error:function(error){
+					var detail = _this.$snannyContainer.find('#detail');
+					detail.html("SML Not found");
+				}
+			});
 		}
+
+
 
 	});
 

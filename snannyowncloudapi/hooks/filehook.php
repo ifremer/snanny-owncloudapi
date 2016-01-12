@@ -2,12 +2,18 @@
 
 namespace OCA\SnannyOwncloudApi\Hooks;
 
+use OCA\SnannyOwncloudApi\Parser\OMParser;
+use OCA\SnannyOwncloudApi\Parser\SensorMLParser;
 use OCP\Files\FileInfo;
 use OCP\Util;
 
 const GML_NAMESPACE = "http://www.opengis.net/gml/3.2";
 const SML_NAMESPACE = "http://www.opengis.net/sensorml/2.0";
 const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
+
+const UNKNOW = 0;
+const OM = 1;
+const SML = 2;
 
 class FileHook
 {
@@ -27,9 +33,10 @@ class FileHook
 
         $callback = function ($node) {
             if (FileInfo::TYPE_FILE === $node->getType()) {
-                if ($this->endsWith($node->getName(), 'sensorML.xml')) {
+                $type = $this->getType($node);
+                if ($type === SML) {
                     $this->sensorMLHook->onUpdateOrCreate($node);
-                } else if ($this->endsWith($node->getName(), '.xml')) {
+                } else if ($type === OM) {
                     $this->omHook->onUpdateOrCreate($node);
                 }
             }
@@ -43,14 +50,14 @@ class FileHook
         $this->fileSystemManager->listen('\OC\Files', 'preDelete', function ($node) {
 
             if (FileInfo::TYPE_FILE === $node->getType()) {
-                if ($this->endsWith($node->getName(), 'sensorML.xml')) {
+                $type = $this->getType($node);
+                if ($type === SML) {
                     $this->sensorMLHook->onDelete($node);
-                } else if ($this->endsWith($node->getName(), '.xml')) {
+                } else if ($type === OM) {
                     $this->omHook->onDelete($node);
                 }
             }
         });
-
 
 
         //Si la version d'owncloud est suffisante chargement uniquement dans les cas nécessaires
@@ -71,6 +78,23 @@ class FileHook
     }
 
     /**
+     * Return the type of the node
+     * @param $node node to analyze
+     */
+    function getType($node)
+    {
+        if ($this->endsWith($node->getName(), '.xml')) {
+            $xml = new \SimpleXMLElement($node->getContent());
+            if(OMParser::accept($xml)){
+                return OM;
+            }else if(SensorMLParser::accept($xml)){
+                return SML;
+            }
+        }
+        return UNKNOW;
+    }
+
+    /**
      * Load additional scripts when the files app is visible
      */
     public static function onLoadFilesAppScripts()
@@ -79,7 +103,6 @@ class FileHook
         Util::addScript('snannyowncloudapi', 'filesplugin');
         Util::addStyle('snannyowncloudapi', 'style');
     }
-
 
 
 }

@@ -49,4 +49,12 @@ class OMParser
         }
         return $arr;
     }
+
+    public static function accept($xml){
+        $sos = $xml->children(SOS_NAMESPACE);
+        if ($sos != null && $sos->observation) {
+            return true;
+        }
+        return false;
+    }
 }
