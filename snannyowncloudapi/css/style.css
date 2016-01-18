@@ -14,3 +14,29 @@
 .snannyowncloudapi #detail{
 	margin-left: 15px;
 }
+
+.oc-dialog .observationModel{
+    width: 600px !important;
+    padding-right: 30px;
+    padding-left: 10px;
+}
+
+.oc-dialog .observationModel input{
+    width: 100%;
+}
+
+.oc-dialog .observationModel textarea{
+    width: 100%;
+    height: 65px;
+}
+
+.oc-dialog .error{
+    border-color: #e9322d;
+}
+
+.oc-dialog .observationModel label{
+    color: #777;
+    font-weight: bold;
+}
+
+    

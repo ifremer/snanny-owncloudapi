@@ -4,6 +4,7 @@ namespace OCA\SnannyOwncloudApi\Hooks;
 
 use OCA\SnannyOwncloudApi\Parser\OMParser;
 use OCA\SnannyOwncloudApi\Parser\SensorMLParser;
+use OCA\SnannyOwncloudApi\Util\FileUtils;
 use OCP\Files\FileInfo;
 use OCP\Util;
 
@@ -71,19 +72,13 @@ class FileHook
         }
     }
 
-    function endsWith($haystack, $needle)
-    {
-        // search forward starting from end minus needle length characters
-        return $needle === "" || (($temp = strlen($haystack) - strlen($needle)) >= 0 && strpos($haystack, $needle, $temp) !== FALSE);
-    }
-
     /**
      * Return the type of the node
      * @param $node node to analyze
      */
     function getType($node)
     {
-        if ($this->endsWith($node->getName(), '.xml')) {
+        if (FileUtils::endsWith($node->getName(), '.xml')) {
             $xml = new \SimpleXMLElement($node->getContent());
             if(OMParser::accept($xml)){
                 return OM;
@@ -101,6 +96,8 @@ class FileHook
     {
         Util::addScript('snannyowncloudapi', 'tabview');
         Util::addScript('snannyowncloudapi', 'filesplugin');
+        Util::addScript('snannyowncloudapi', 'fileupload');
+        Util::addScript('snannyowncloudapi', 'templateutil');
         Util::addStyle('snannyowncloudapi', 'style');
     }
 

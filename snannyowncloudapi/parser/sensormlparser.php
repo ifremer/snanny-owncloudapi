@@ -44,8 +44,8 @@ class SensorMLParser
     }
 
     public static function accept($xml){
-        $sos = $xml->children(SOS_NAMESPACE);
-        if ($sos != null && $sos->observation) {
+        $sml = $xml->children(SML_NAMESPACE);
+        if ($sml != null) {
             return true;
         }
         return false;

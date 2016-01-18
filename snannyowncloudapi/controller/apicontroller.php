@@ -17,7 +17,10 @@ use OC\Share\Share;
 use OCA\SnannyOwncloudApi\Db\ActivityDao;
 use OCA\SnannyOwncloudApi\Db\FileCacheDao;
 use OCA\SnannyOwncloudApi\Db\SystemAncestorsMapper;
-use OCA\SnannyOwncloudApi\Hooks\DelegateOmHook;
+use OCA\SnannyOwncloudApi\Parser\OMParser;
+use OCA\SnannyOwncloudApi\Parser\SensorMLParser;
+use OCA\SnannyOwncloudApi\Tar\TarParser;
+use OCA\SnannyOwncloudApi\Util\FileUtils;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -43,10 +46,34 @@ class ApiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function index($nodeId, $shareType)
+    public function tarInfo($nodeId)
     {
-        DelegateOmHook::updateShare($nodeId, $shareType);
-        return new JSONResponse(['info' => 'snanny-owncloud-api is up']);
+        //959
+
+        $cacheInfo = FileCacheDao::getCacheInfo($nodeId);
+        //Get file information (storage urn and user)
+        $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
+        //Get content
+        $tarContent = TarParser::parse($fileInfo['urn']);
+
+        $arr = array();
+        foreach ($tarContent as $item) {
+            $path = $item['path'];
+            if ($item['file']) {
+                if (FileUtils::endsWith($path, 'xml')) {
+                    $data = file_get_contents($path);
+                    $xml = new \SimpleXMLElement($data);
+                    if(OMParser::accept($xml)) {
+                        $arr[] = array('file' => $item['filename'], 'om_data' => OMParser::parse(file_get_contents($path)));
+                    }else{
+                        $arr[] = array('file' => $item['filename'], 'sensor_data' => SensorMLParser::parse(file_get_contents($path)));
+                    }
+                }
+            }
+        }
+
+
+        return new JSONResponse(['tar-list' => $tarContent, 'detail' => $arr]);
     }
 
 
@@ -102,7 +129,7 @@ class ApiController extends Controller
         // Get shares
         $shares = Share::getAllSharesForFileId($id);
         // Return json data
-        return new JSONResponse(array('user' => $fileInfo['user'], 'content' => $content, 'path' => $cacheInfo['path'], 'shares'=>$shares));
+        return new JSONResponse(array('user' => $fileInfo['user'], 'content' => $content, 'path' => $cacheInfo['path'], 'shares' => $shares));
     }
 
 
@@ -113,6 +140,7 @@ class ApiController extends Controller
      * @return DataDisplayResponse|NotFoundResponse Reponse if document exist, otherwise raised exception
      *
      * @NoCSRFRequired
+     * @NoAdminRequired
      */
     public function sensorML($uuid, $pretty = false)
     {
@@ -122,7 +150,7 @@ class ApiController extends Controller
             if ($cacheInfo !== null) {
                 $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
                 $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
-                if($pretty == true){
+                if ($pretty == true) {
                     return new DataDisplayResponse('<pre>' . htmlentities($content) . '</pre>');
                 }
                 return new DataDisplayResponse($content);
@@ -135,6 +163,7 @@ class ApiController extends Controller
     /**
      * get file content from file_id
      * @NoCSRFRequired
+     * @NoAdminRequired
      */
     public function downloadSensorML($uuid)
     {
@@ -150,46 +179,11 @@ class ApiController extends Controller
         return new NotFoundResponse();
     }
 
-    /**
-     * get file content from file_id
-     * @NoCSRFRequired
-     */
-    public function downloadData($omid, $filename){
-
-        $cacheInfo = FileCacheDao::getCacheInfo($omid);
-        //Get file information (storage urn and user)
-        $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
-        //Parse file om
-        $dataFile = dirname($fileInfo['urn']).'/'.$filename;
-        if(file_exists($dataFile)) {
-            return new StreamResponse($dataFile);
-        }
-        return new NotFoundResponse();
-    }
-
-
 
     /**
      * get file content from file_id
      * @NoCSRFRequired
-     */
-    public function infoData($omid, $filename){
-
-        $cacheInfo = FileCacheDao::getCacheInfo($omid);
-        //Get file information (storage urn and user)
-        $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
-        //Parse file om
-        $dataFile = dirname($fileInfo['urn']).'/'.$filename;
-        if(file_exists($dataFile)) {
-            return new JSONResponse(array('fileSize'=>filesize($dataFile)));
-        }
-        return new NotFoundResponse();
-    }
-
-
-    /**
-     * get file content from file_id
-     * @NoCSRFRequired
+     * @NoAdminRequired
      */
     public function ancestorSML($uuid)
     {
@@ -200,6 +194,7 @@ class ApiController extends Controller
     /**
      * get file content from file_id
      * @NoCSRFRequired
+     * @NoAdminRequired
      */
     public function infoSML($uuid)
     {
@@ -218,6 +213,4 @@ class ApiController extends Controller
         }
         return new JSONResponse($data);
     }
-
-
 }

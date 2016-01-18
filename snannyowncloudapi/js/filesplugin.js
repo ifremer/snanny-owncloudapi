@@ -24,7 +24,9 @@
 			if (fileList.id === 'trashbin' || fileList.id === 'files.public') {
 				return;
 			}
-			fileList.registerTabView(new OCA.SnannyOwncloudAPI.ObservationTabView('observationTabView', {order: -10}));
+			fileList.registerTabView(new OCA.SnannyOwncloudAPI.ObservationTabView('observationTabView', {
+				order: -10
+			}));
 		}
 	};
 })();

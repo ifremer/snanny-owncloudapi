@@ -18,8 +18,13 @@ use OCA\SnannyOwncloudApi\Db\IndexHistory;
 use OCA\SnannyOwncloudApi\Db\IndexHistoryMapper;
 use OCA\SnannyOwncloudApi\Db\ObservationModelMapper;
 use OCA\SnannyOwncloudApi\Parser\OMParser;
+use OCA\SnannyOwncloudApi\Util\FileUtils;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\DataDownloadResponse;
+use OCP\AppFramework\Http\DownloadResponse;
+use OCP\AppFramework\Http\NotFoundResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\StreamResponse;
 use OCP\IRequest;
 
 const SOS_NAMESPACE = "http://www.opengis.net/sos/2.0";
@@ -43,15 +48,6 @@ class OmController extends Controller
     /**
      * @NoCSRFRequired
      */
-    public function index()
-    {
-        return new JSONResponse(['data' => ['message' => 'snannyowncloudapi om']]);
-    }
-
-
-    /**
-     * @NoCSRFRequired
-     */
     public function updateIndex($uuid, $time, $status, $message, $indexedObservations, $fileId)
     {
 
@@ -71,13 +67,12 @@ class OmController extends Controller
     /**
      * get file content from file_id
      * @NoCSRFRequired
+     * @NoAdminRequired
      */
     public function info($uuid)
     {
         $data = array();
         $observation = $this->omMapper->getByIdOrUuid($uuid, $uuid);
-
-
         if ($observation !== null) {
 
             $data['uuid'] = $observation->getUuid();
@@ -116,6 +111,7 @@ class OmController extends Controller
     /**
      * get file content from file_id
      * @NoCSRFRequired
+     * @NoAdminRequired
      */
     public function detail($uuid)
     {
@@ -136,4 +132,101 @@ class OmController extends Controller
 
     }
 
+
+    /**
+     * get file content from file_id
+     * @NoCSRFRequired
+     *
+     */
+    public function downloadData($omid, $filename)
+    {
+
+        $cacheInfo = FileCacheDao::getCacheInfo($omid);
+        //Get file information (storage urn and user)
+        $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
+        //Parse file om
+        $dataFile = dirname($fileInfo['urn']) . '/' . $filename;
+        if (file_exists($dataFile)) {
+            return new StreamResponse($dataFile);
+        }
+        return new NotFoundResponse();
+    }
+
+
+    /**
+     * get file content from uuid
+     * @NoCSRFRequired
+     * @NoAdminRequired
+     * @PublicPage
+     *
+     */
+    public function downloadResult($uuid)
+    {
+        $observation = $this->omMapper->getByIdOrUuid($uuid, $uuid);
+        if ($observation !== null) {
+            $cacheInfo = FileCacheDao::getCacheInfo($observation->getFileId());
+            //Get file information (storage urn and user)
+            $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
+            //Parse file om
+            $resultFileName = $observation->getResultFile();
+            $dataFile = dirname($fileInfo['urn']) . '/' . $observation->getResultFile();
+            if (file_exists($dataFile)) {
+                return new DataDownloadResponse(file_get_contents($dataFile), $resultFileName, '');
+            }
+        }
+        return new NotFoundResponse();
+    }
+
+
+    /**
+     * get file content from file_id
+     * @NoCSRFRequired
+     */
+    public function infoData($omid, $filename)
+    {
+
+        $cacheInfo = FileCacheDao::getCacheInfo($omid);
+        //Get file information (storage urn and user)
+        $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
+        //Parse file om
+        $dataFile = dirname($fileInfo['urn']) . '/' . $filename;
+        if (file_exists($dataFile)) {
+            return new JSONResponse(array('fileSize' => filesize($dataFile)));
+        }
+        return new NotFoundResponse();
+    }
+
+    /**
+     * get file content from navigation nodeId
+     * @NoCSRFRequired
+     * @NoAdminRequired
+     */
+    public function infoFile($nodeId)
+    {
+        $cacheInfo = FileCacheDao::getCacheInfo($nodeId);
+        $filename = basename($cacheInfo['path']);
+        $observation = $this->omMapper->getByDataFileName($filename);
+        if($observation){
+            $data = [];
+            $data['uuid'] = $observation->getUuid();
+            $data['name'] = $observation->getName();
+            $data['description'] = $observation->getDescription();
+            $data['systemUuid'] = $observation->getSystemUuid();
+            $data['resultFile'] = $observation->getResultFile();
+            $data['indexed'] = false;
+            return new JSONResponse(array('status'=>'success', 'data'=>$data));
+        }
+        return new JSONResponse(array('status'=>'failure'));
+    }
+
+
+    /**
+     * get file content from navigation nodeId
+     * @NoCSRFRequired
+     * @NoAdminRequired
+     */
+    public function postFile($nodeId, $name, $description, $system)
+    {
+        return new JSONResponse(array('status'=>'success', 'data'=>array('name'=>$name, 'description'=>$description, 'system'=>$system)));
+    }
 }

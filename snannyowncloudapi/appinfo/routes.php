@@ -19,8 +19,6 @@
  */
 return [
     'routes' => [
-        //To delete
-        ['name' => 'api#index', 'url' => '/', 'verb' => 'GET'],
         //Batch get files and content
         ['name' => 'api#files', 'url' => '/files', 'verb' => 'GET'],
         ['name' => 'api#lastfailure', 'url' => '/lastfailure', 'verb' => 'GET'],
@@ -32,13 +30,16 @@ return [
         ['name' => 'api#infoSML', 'url' => '/sml/{uuid}/info', 'verb' => 'GET'],
         ['name' => 'api#downloadSensorML', 'url' => '/sml/{uuid}/download', 'verb' => 'GET'],
 
+
         //Get OM Informations
         ['name' => 'om#updateIndex', 'url' => '/om', 'verb' => 'POST'],
         ['name' => 'om#info', 'url' => '/om/{uuid}/info', 'verb' => 'GET'],
+        //Nav files
+        ['name' => 'om#downloadData', 'url'=>'/omresult/{omid}', 'verb'=>'GET'],
+        ['name' => 'om#infoData', 'url'=>'/ominfo/{omid}', 'verb'=>'GET'],
+        ['name' => 'om#infoFile', 'url'=>'/data/{nodeId}/info', 'verb'=>'GET'],
+        ['name' => 'om#postFile', 'url'=>'/data/{nodeId}', 'verb'=>'POST'],
+        ['name' => 'om#downloadResult', 'url'=>'/data/{uuid}/download', 'verb'=>'GET']
 
-
-        //Download data
-        ['name' => 'api#downloadData', 'url'=>'/omresult/{omid}', 'verb'=>'GET'],
-        ['name' => 'api#infoData', 'url'=>'/ominfo/{omid}', 'verb'=>'GET']
     ]
 ];
