@@ -38,7 +38,7 @@ class FileHook
                 if ($type === SML) {
                     $this->sensorMLHook->onUpdateOrCreate($node);
                 } else if ($type === OM) {
-                    $this->omHook->onUpdateOrCreate($node);
+                    $this->omHook->onUpdateOrCreateFromNode($node);
                 }
             }
         };

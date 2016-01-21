@@ -55,4 +55,21 @@ class SystemMapper extends Mapper
             return null;
         }
     }
+
+    /**
+     * Autocomplete element
+     * @param $userId user Id
+     * @param $term search terms
+     * @return array system elements
+     */
+    public function autocomplete($userId, $term){
+        $sql = 'SELECT s.* FROM *PREFIX*snanny_system s'
+            .' INNER JOIN *PREFIX*filecache c ON s.file_id = c.fileid'
+            .' INNER JOIN *PREFIX*storages d ON d.numeric_id=c.storage'
+            .' WHERE d.id=:user_id'
+            .' AND ( UPPER(s.name) LIKE :term OR UPPER(s.uuid) LIKE :term )'
+            .' ORDER by s.name';
+
+        return $this->findEntities($sql, array(':term'=>'%'.strtoupper($term).'%', ':user_id'=>'home::'.$userId));
+    }
 }

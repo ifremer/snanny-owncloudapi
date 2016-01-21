@@ -30,10 +30,11 @@
 		},
 
 
-		extractData: function(inputs) {
+		extractData: function(dialog) {
 			var result = {};
-			$.each(inputs, function(idx, entry) {
-				result[entry[0].name] = entry.val();
+			dialog.find('input, select, textarea').each(
+			   function(idx, entry) {
+				result[entry.name] = entry.value;
 			});
 			return result;
 		},

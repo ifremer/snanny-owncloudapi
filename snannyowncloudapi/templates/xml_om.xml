@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sos:InsertObservation service="SOS" version="2.0.0"
+                       xmlns:sos="http://www.opengis.net/sos/2.0"
+                       xmlns:gml="http://www.opengis.net/gml/3.2"
+                       xmlns:xlink="http://www.w3.org/1999/xlink"
+                       xmlns:om="http://www.opengis.net/om/2.0"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:schemaLocation="http://www.opengis.net/sos/2.0 http://schemas.opengis.net/sos/2.0/sos.xsd">
+    <sos:offering>[Offering]</sos:offering>
+    <sos:observation>
+        <om:OM_Observation gml:id="top"
+                           xmlns:om="http://www.opengis.net/om/2.0"
+                           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                           xmlns:xlink="http://www.w3.org/1999/xlink"
+                           xmlns:gml="http://www.opengis.net/gml/3.2"
+                           xsi:schemaLocation="http://www.opengis.net/om/2.0 http://schemas.opengis.net/om/2.0/observation.xsd">
+            <gml:description>{description}</gml:description>
+            <gml:identifier codeSpace="uuid">{uuid}</gml:identifier>
+            <gml:name>{name}</gml:name>
+
+            <om:type xlink:href="http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement"/>
+
+            <om:resultTime>
+                <gml:TimeInstant gml:id="updateDate">
+                    <!--Format 2014-04-04T08:30:29.021042-->
+                    <gml:timePosition>{updateTime}</gml:timePosition>
+                </gml:TimeInstant>
+            </om:resultTime>
+
+            <om:procedure xlink:href="{system}"/>
+
+            <om:result xlink:href="{resultFile}"
+                       xlink:role="{type}"
+                       xsi:type="gml:ReferenceType"></om:result>
+        </om:OM_Observation>
+    </sos:observation>
+</sos:InsertObservation>
+
+
+

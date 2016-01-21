@@ -27,15 +27,19 @@ class DelegateSensorMLHook
         if($sml['uuid']) {
             $uuid = $sml['uuid'];
             $this->systemAncestorsMapper->deleteChildren($uuid);
-            if ($sml['components']) {
-                foreach ($sml['components'] as $component) {
-                    $systemAncestor = new SystemAncestor();
-                    $systemAncestor->setParentUuid($sml['uuid']);
-                    $systemAncestor->setParentName($sml['name']);
-                    $systemAncestor->setComponentName($component['name']);
-                    $systemAncestor->setStatus(true);
-                    $systemAncestor->setChildUuid($component['uuid']);
-                    $this->systemAncestorsMapper->insert($systemAncestor);
+            $components = $sml['components'];
+            if ($components) {
+                //IF data is not unique, there is no link created between ancestors and children
+                if($this->ensureUnique($components)) {
+                    foreach ($components as $component) {
+                        $systemAncestor = new SystemAncestor();
+                        $systemAncestor->setParentUuid($sml['uuid']);
+                        $systemAncestor->setParentName($sml['name']);
+                        $systemAncestor->setComponentName($component['name']);
+                        $systemAncestor->setStatus(true);
+                        $systemAncestor->setChildUuid($component['uuid']);
+                        $this->systemAncestorsMapper->insert($systemAncestor);
+                    }
                 }
             }
 
@@ -67,6 +71,17 @@ class DelegateSensorMLHook
             $this->systemMapper->update($system);
             $this->systemAncestorsMapper->logicalDeleteChildren($system->getUuid());
         }
+    }
+
+    private function ensureUnique($components){
+        $arr = [];
+        foreach ($components as $comp) {
+            if($arr[$comp['name']]){
+                return false;
+            }
+            $arr[$comp['name']] = 1;
+        }
+        return true;
     }
 
 }

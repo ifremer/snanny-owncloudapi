@@ -13,17 +13,17 @@ namespace OCA\SnannyOwncloudApi\Controller;
 
 use OC\AppFramework\Http;
 use OC\Files\Cache;
+use OC\Files\Filesystem;
+use OCA\Files\Helper;
 use OCA\SnannyOwncloudApi\Db\FileCacheDao;
 use OCA\SnannyOwncloudApi\Db\IndexHistory;
 use OCA\SnannyOwncloudApi\Db\IndexHistoryMapper;
 use OCA\SnannyOwncloudApi\Db\ObservationModelMapper;
 use OCA\SnannyOwncloudApi\Parser\OMParser;
-use OCA\SnannyOwncloudApi\Util\FileUtils;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDownloadResponse;
-use OCP\AppFramework\Http\DownloadResponse;
-use OCP\AppFramework\Http\NotFoundResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\NotFoundResponse;
 use OCP\AppFramework\Http\StreamResponse;
 use OCP\IRequest;
 
@@ -37,12 +37,16 @@ class OmController extends Controller
 
     private $omMapper;
     private $indexHistoryMapper;
+    private $omHook;
 
-    public function __construct($AppName, IRequest $request, ObservationModelMapper $omMapper, IndexHistoryMapper $indexHistoryMapper)
+    const OBSERVATION_TEMPLATE = '/apps/snannyowncloudapi/templates/xml_om.xml';
+
+    public function __construct($AppName, IRequest $request, ObservationModelMapper $omMapper, IndexHistoryMapper $indexHistoryMapper,  DelegateOmHook $omHook)
     {
         parent::__construct($AppName, $request);
         $this->omMapper = $omMapper;
         $this->indexHistoryMapper = $indexHistoryMapper;
+        $this->omHook = $omHook;
     }
 
     /**
@@ -84,20 +88,20 @@ class OmController extends Controller
 
 
             $indexedProperties = $this->indexHistoryMapper->getByUuid($uuid, $uuid);
-            if($indexedProperties !== null){
+            if ($indexedProperties !== null) {
                 $data['index_history'] = array();
 
-                foreach($indexedProperties as $index){
+                foreach ($indexedProperties as $index) {
                     $data['indexed'] = true;
                     $arr = array(
-                        'time'=>date('c',$index->getTime()/1000),
-                        'status'=>($index->getStatus())?"success":"failure",
-                        'succeded'=>$index->getStatus()
+                        'time' => date('c', $index->getTime() / 1000),
+                        'status' => ($index->getStatus()) ? "success" : "failure",
+                        'succeded' => $index->getStatus()
 
                     );
-                    if($index->getStatus()){
+                    if ($index->getStatus()) {
                         $arr['indexedObservations'] = $index->getIndexedObservations();
-                    }else{
+                    } else {
                         $arr['message'] = $index->getMessage();
                     }
                     $data['index_history'][] = $arr;
@@ -206,7 +210,7 @@ class OmController extends Controller
         $cacheInfo = FileCacheDao::getCacheInfo($nodeId);
         $filename = basename($cacheInfo['path']);
         $observation = $this->omMapper->getByDataFileName($filename);
-        if($observation){
+        if ($observation) {
             $data = [];
             $data['uuid'] = $observation->getUuid();
             $data['name'] = $observation->getName();
@@ -214,19 +218,87 @@ class OmController extends Controller
             $data['systemUuid'] = $observation->getSystemUuid();
             $data['resultFile'] = $observation->getResultFile();
             $data['indexed'] = false;
-            return new JSONResponse(array('status'=>'success', 'data'=>$data));
+            return new JSONResponse(array('status' => 'success', 'data' => $data));
         }
-        return new JSONResponse(array('status'=>'failure'));
+        return new JSONResponse(array('status' => 'failure'));
     }
 
 
     /**
-     * get file content from navigation nodeId
+     * Create an OML for nodeId
      * @NoCSRFRequired
      * @NoAdminRequired
      */
     public function postFile($nodeId, $name, $description, $system)
     {
-        return new JSONResponse(array('status'=>'success', 'data'=>array('name'=>$name, 'description'=>$description, 'system'=>$system)));
+        $node = FileCacheDao::getCacheInfo($nodeId);
+        //Get file information (storage urn and user)
+        $fileInfo = FileCacheDao::getFileInfo($node['storage'], $node['path']);
+        //Create the O&M file
+        $baseOC = getcwd() . self::OBSERVATION_TEMPLATE;
+
+        $uuid = uniqid('', true);
+
+        $content = $this->templateIt(file_get_contents($baseOC), array(
+            'uuid' => $uuid,
+            'name' => $name,
+            'description' => $description,
+            'updateTime' => date(\DateTime::ISO8601, time()),
+            'system' => $system,
+            'resultFile' => $node['path'],
+            'type' => 'text/csv'
+        ));
+
+        $baseUrn = dirname($fileInfo['urn']);
+
+        $fileName = pathinfo($fileInfo['urn'], PATHINFO_FILENAME). '.xml';
+        $filePath = $baseUrn . '/' . $fileName;
+        
+        file_put_contents($filePath, $content);
+
+        $newNode = FileCacheDao::createFileNode($node, $fileName, filesize($filePath));
+        $this->omHook->onUpdateOrCreate($newNode['fileid'], $content);
+
+
+        $data = self::formatFileInfo($newNode);
+        $data['status'] = 'success';
+
+
+        return new JSONResponse($data);
+    }
+
+
+    private function templateIt($content, $arr)
+    {
+        foreach ($arr as $key => $value) {
+            $content = str_replace('{' . $key . '}', $value, $content);
+        }
+        return $content;
+    }
+
+
+    /**
+     * Formats the file info to be returned as JSON to the client.
+     *
+     * @param \OCP\Files\FileInfo $i
+     * @return array formatted file info
+     */
+    public static function formatFileInfo($i) {
+        $entry = array();
+        $entry['id'] = $i['fileid'];
+        $entry['parentId'] = $i['parent'];
+        $entry['mtime'] = $i['mtime'] * 1000;
+        $entry['isPreviewAvailable'] = true;
+        $entry['name'] = $i['name'];
+        $entry['permissions'] = $i['permissions'];
+        $entry['mimetype'] = 'application/xml';
+        $entry['originalname'] = $i['name'];
+        $entry['size'] = $i['size'];
+        $entry['type'] = $i['type'];
+        $entry['etag'] = $i['etag'];
+        $entry['uploadMaxFilesize'] = '';
+        $entry['maxHumanFilesize'] = '';
+        $entry['directory'] = Filesystem::normalizePath(dirname($i['path']));
+        return $entry;
     }
 }

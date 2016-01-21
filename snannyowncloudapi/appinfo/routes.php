@@ -29,7 +29,7 @@ return [
         ['name' => 'api#ancestorSML', 'url' => '/sml/{uuid}/ancestors', 'verb' => 'GET'],
         ['name' => 'api#infoSML', 'url' => '/sml/{uuid}/info', 'verb' => 'GET'],
         ['name' => 'api#downloadSensorML', 'url' => '/sml/{uuid}/download', 'verb' => 'GET'],
-
+        ['name' => 'api#autocompleteSensors', 'url' => '/sml', 'verb' => 'POST'],
 
         //Get OM Informations
         ['name' => 'om#updateIndex', 'url' => '/om', 'verb' => 'POST'],

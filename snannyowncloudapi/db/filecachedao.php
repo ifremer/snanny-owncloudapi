@@ -54,4 +54,36 @@ class FileCacheDao
         $fileCacheInfo = self::getCacheInfo($id);
         return self::getContent($fileCacheInfo['storage'], $fileCacheInfo['path']);
     }
+
+
+    public static function createFileNode($node, $fileName, $size){
+
+        $filePath = dirname($node['path']) .'/'. $fileName;
+        $item = array(
+            'storage'=>$node['storage'],
+            'path'=>$filePath,
+            'path_hash'=>md5($filePath),
+            'parent'=>$node['parent'],
+            'name'=>$fileName,
+            'mimetype'=>12,
+            'mimepart'=>5,
+            'size'=>$size,
+            'mtime'=>$node['mtime'],
+            'storage_mtime'=>$node['storage_mtime'],
+            'encrypted'=>0,
+            'unencrypted_size'=>0,
+            'etag'=>md5($fileName),
+            'permissions'=>$node['permissions']
+        );
+        DBUtil::insert('*PREFIX*filecache', $item);
+
+        $result = DBUtil::executeQuery('SELECT * FROM *PREFIX*filecache WHERE storage = :storage AND path_hash = :path_hash',
+            array(':storage'=>$item['storage'],
+                ':path_hash'=>$item['path_hash']));
+        while($row = $result->fetch()){
+            return $row;
+        }
+        return null;
+
+    }
 }

@@ -21,10 +21,15 @@ class DelegateOmHook
         $this->omMapper = $omMapper;
     }
 
-    public function onUpdateOrCreate($node)
+    public function onUpdateOrCreateFromNode($node)
     {
-        $parsed = OMParser::parse($node->getContent());
-        $observation = $this->omMapper->getByIdOrUuid($node->getId(), $parsed['uuid']);
+        return $this->onUpdateOrCreate($node->getId(), $node->getContent());
+
+    }
+
+    public function onUpdateOrCreate($nodeId, $content){
+        $parsed = OMParser::parse($content);
+        $observation = $this->omMapper->getByIdOrUuid($nodeId, $parsed['uuid']);
         $insert = false;
         if ($observation == null) {
             $observation = new ObservationModel();
@@ -34,7 +39,7 @@ class DelegateOmHook
         $observation->setUuid($parsed['uuid']);
         $observation->setName($parsed['name']);
         $observation->setDescription($parsed['description']);
-        $observation->setFileId($node->getId());
+        $observation->setFileId($nodeId);
         $observation->setStatus(true);
         $observation->setSystemUuid($parsed['system-uuid']);
         $observation->setResultFile($parsed['result-file']);

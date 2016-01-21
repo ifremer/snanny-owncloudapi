@@ -28,6 +28,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\NotFoundResponse;
 use OCP\AppFramework\Http\StreamResponse;
 use OCP\IRequest;
+use OCP\User;
 
 class ApiController extends Controller
 {
@@ -210,6 +211,26 @@ class ApiController extends Controller
             $children = $this->ancestorsMapper->getChildren($system->getUuid());
             $data['children'] = $children;
             $data['hasChildren'] = ($children != null);
+        }
+        return new JSONResponse($data);
+    }
+
+    /**
+     * get file content from file_id
+     * @NoCSRFRequired
+     * @NoAdminRequired
+     */
+    public function autocompleteSensors($term){
+
+        $user = \OC::$server->getUserSession()->getUser()->getUID();
+
+
+        $result = $this->systemMapper->autocomplete($user , $term);
+
+        //Search term
+        $data = array();
+        foreach ($result as $item) {
+            $data[] = array('label'=>$item->getName().' - '.$item->getUuid(), 'uuid'=>$item->getUuid());
         }
         return new JSONResponse($data);
     }

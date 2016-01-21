@@ -9,5 +9,11 @@ class DBUtil
     {
         $connection = \OC::$server->getDatabaseConnection();
         return $connection->executeQuery($sql, $params);
+
+    }
+
+    public static function insert($table, $arr){
+        $connection = \OC::$server->getDatabaseConnection();
+        $connection->insertIfNotExist($table, $arr);
     }
 }

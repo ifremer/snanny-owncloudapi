@@ -48,7 +48,8 @@ class Application extends App{
                  $c->query('AppName'),
                  $c->query('Request'),
                  $c->query('ObservationModelMapper'),
-                 $c->query('IndexHistoryMapper'));
+                 $c->query('IndexHistoryMapper'),
+                 $c->query('DelegateOmHook'));
          });
 
          /**Mappers**/

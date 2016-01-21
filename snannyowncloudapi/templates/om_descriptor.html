@@ -2,9 +2,14 @@
 	<div>Describe your observation for file :</div>
 	<div><span class="svg icon"><img src="{icon}"/></span> {filename}</div >
 	<form action="#" id="observationForm">
-		<div><label>Name : </label><input type="text" id="observationName" name="name" maxlength="300" /></div>
-		<div><label>Description : </label><br/>
+		<div><label>Name : </label><input type="text" id="observationName" name="name" maxlength="300" required/></div>
+		<div><label>Description :</label><br/>
 		<textarea id="observationDesc" name="description" maxlength="2000"/></div>
-		<div><label>System : </label><input type="text" id="observationSystem" name="system" maxlength="60" />
+		<div>
+		<label>System :  <span class="help">Search a system by its name, unique id </span></label>
+		<input type="search" id="observationSystem" name="systemDisplay" maxlength="60" placeholder="Search..." required/>
+		<div><span id="searchNotFound" class="searchNotFound hidden">No system found with this terms, please refine your search</span></div>
+		<input type="hidden" id="system" name="system"/>
 	</form>
+	<div><span class="error" id="errorMsg"></span></div>
 </div>
