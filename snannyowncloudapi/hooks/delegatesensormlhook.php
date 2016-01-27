@@ -15,17 +15,27 @@ class DelegateSensorMLHook
     private $systemMapper;
     private $systemAncestorsMapper;
 
+    /**
+     * DelegateSensorMLHook constructor.
+     * @param SystemMapper $systemMapper
+     * @param SystemAncestorsMapper $systemAncestorsMapper
+     */
     public function __construct(SystemMapper $systemMapper, SystemAncestorsMapper $systemAncestorsMapper)
     {
         $this->systemMapper = $systemMapper;
         $this->systemAncestorsMapper = $systemAncestorsMapper;
     }
 
-    public function onUpdateOrCreate($node)
+    /**
+     * @param $fileId
+     * @param $content
+     * @param null $pharPath
+     */
+    public function onUpdateOrCreate($fileId, $content, $pharPath = null)
     {
-        $sml = SensorMLParser::parse($node->getContent());
-        if($sml['uuid']) {
-            $uuid = $sml['uuid'];
+        $sml = SensorMLParser::parse($content);
+        $uuid = $sml['uuid'];
+        if ($uuid) {
             $this->systemAncestorsMapper->deleteChildren($uuid);
             $components = $sml['components'];
             if ($components) {
@@ -43,7 +53,7 @@ class DelegateSensorMLHook
                 }
             }
 
-            $system = $this->systemMapper->getByIdOrUuid($node->getId(), $uuid);
+            $system = $this->systemMapper->getByUuid($uuid);
             $insert = false;
             if ($system == null) {
                 $system = new System();
@@ -53,7 +63,8 @@ class DelegateSensorMLHook
             $system->setUuid($uuid);
             $system->setName($sml['name']);
             $system->setDescription($sml['desc']);
-            $system->setFileId($node->getId());
+            $system->setFileId($fileId);
+            $system->setPharPath($pharPath);
             $system->setStatus(true);
             if ($insert === true) {
                 $this->systemMapper->insert($system);
@@ -63,6 +74,25 @@ class DelegateSensorMLHook
         }
     }
 
+    /**
+     * @param $components
+     * @return bool
+     */
+    private function ensureUnique($components)
+    {
+        $arr = [];
+        foreach ($components as $comp) {
+            if ($arr[$comp['name']]) {
+                return false;
+            }
+            $arr[$comp['name']] = 1;
+        }
+        return true;
+    }
+
+    /**
+     * @param $node
+     */
     public function onDelete($node)
     {
         $system = $this->systemMapper->getByFileId($node->getId());
@@ -71,17 +101,6 @@ class DelegateSensorMLHook
             $this->systemMapper->update($system);
             $this->systemAncestorsMapper->logicalDeleteChildren($system->getUuid());
         }
-    }
-
-    private function ensureUnique($components){
-        $arr = [];
-        foreach ($components as $comp) {
-            if($arr[$comp['name']]){
-                return false;
-            }
-            $arr[$comp['name']] = 1;
-        }
-        return true;
     }
 
 }

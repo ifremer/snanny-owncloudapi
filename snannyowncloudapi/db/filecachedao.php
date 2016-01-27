@@ -14,10 +14,24 @@
 namespace OCA\SnannyOwncloudApi\Db;
 
 use OC\Files\Cache\Storage;
+use OCA\SnannyOwncloudApi\Tar\TarParser;
 
 
 class FileCacheDao
 {
+
+    /**
+     * Get complete url of fileId
+     * @param $fileId id of file
+     * @return string urn of file
+     */
+    public static function getFullUrl($fileId)
+    {
+        $cacheInfo = self::getCacheInfo($fileId);
+        $result = self::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
+        return $result['urn'];
+
+    }
 
     public static function getCacheInfo($id)
     {
@@ -30,13 +44,23 @@ class FileCacheDao
         return null;
     }
 
-    public static function getFileInfo($numericId, $path)
+    public static function getFileInfo($numericId, $path, $pharPath = null)
     {
         $storage = Storage::getStorageId($numericId);
         $home = '/var/www/owncloud/data';
         $user = explode("::", $storage)[1];
         $urn = $home . '/' . $user . '/' . $path;
+        if ($pharPath != null) {
+            $urn = TarParser::PHAR_PROTOCOLE . $urn . $pharPath;
+        }
+
         return array('urn' => $urn, 'user' => $user);
+    }
+
+    public static function getContentByFileId($id)
+    {
+        $fileCacheInfo = self::getCacheInfo($id);
+        return self::getContent($fileCacheInfo['storage'], $fileCacheInfo['path']);
     }
 
     public static function getContent($numericId, $path)
@@ -45,16 +69,13 @@ class FileCacheDao
         return FileCacheDao::getContentByUrn($fileInfo['urn']);
     }
 
-    public static function getContentByUrn($urn)
+    public static function getContentByUrn($urn, $pharPath = null)
     {
+        if ($pharPath) {
+            return TarParser::getContent($urn, $pharPath);
+        }
         return file_get_contents($urn);
     }
-
-    public static function getContentByFileId($id){
-        $fileCacheInfo = self::getCacheInfo($id);
-        return self::getContent($fileCacheInfo['storage'], $fileCacheInfo['path']);
-    }
-
 
     public static function createFileNode($node, $fileName, $size){
 

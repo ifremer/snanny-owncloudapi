@@ -2,6 +2,8 @@
 
 namespace OCA\SnannyOwncloudApi\Util;
 
+use OCA\SnannyOwncloudApi\Tar\TarParser;
+
 /**
  * Created by PhpStorm.
  * User: athorel
@@ -10,9 +12,31 @@ namespace OCA\SnannyOwncloudApi\Util;
  */
 class FileUtils
 {
+    const PHAR_PREFIX = 'phar:';
+
+    /**
+     * Check if string endswith the needle
+     * @param $haystack string to search in
+     * @param $needle needle to search
+     * @return bool true if haystack ends with needle
+     */
     public static function endsWith($haystack, $needle)
     {
         // search forward starting from end minus needle length characters
         return $needle === "" || (($temp = strlen($haystack) - strlen($needle)) >= 0 && strpos($haystack, $needle, $temp) !== FALSE);
+    }
+
+    /**
+     * normalize a path
+     * @param $path file path
+     * @param $pharPath pharPath
+     * @return string normalized path
+     */
+    public static function normalizePath($path, $pharPath)
+    {
+        if ($pharPath !== '') {
+            return TarParser::PHAR_PROTOCOLE . $path . $pharPath;
+        }
+        return $path;
     }
 }

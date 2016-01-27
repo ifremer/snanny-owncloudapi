@@ -8,7 +8,8 @@
 	 * @namespace
 	 */
 	ObservationUpload = {
-
+		/**Request */
+		_request: undefined,
 
 		_prompt : [],
 
@@ -92,7 +93,7 @@
 				text: t('core', 'Ok'),
 				click: dialog.callback,
 				defaultButton: true
-			}
+			};
 
 			$('body').append(dialog.tmpl);
 			$(dialogId).ocdialog({
@@ -119,8 +120,10 @@
 			    	var selected = ui.item;
 			    	if(selected){
 			    		$('#system').val(selected.uuid);
+						$("#searchNotFound").toggleClass("hidden", true);
 			   		}else{
 			   			$('#system').val('');
+						$("#searchNotFound").toggleClass("hidden", true);
 			   		}
 			    };
 
@@ -131,8 +134,9 @@
 			    select: onChangeOrSelect,
 			    source:function(request, response){
 			    	var searchParam  = {'term':request.term};
-				    $.ajax({
+					$.ajax({
 				        url: OC.generateUrl('/apps/snannyowncloudapi/sml'),
+						delay: 300,
 				        data : searchParam,
 				        dataType: "json",
 				        type: "POST",
@@ -147,6 +151,7 @@
 					            }));
 				        	}else{
 								$("#searchNotFound").toggleClass("hidden", false);
+								response(null);
 				        	}
 				        }
 				    });

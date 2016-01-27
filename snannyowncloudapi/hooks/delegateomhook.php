@@ -21,58 +21,15 @@ class DelegateOmHook
         $this->omMapper = $omMapper;
     }
 
-    public function onUpdateOrCreateFromNode($node)
+    public static function onShare($params)
     {
-        return $this->onUpdateOrCreate($node->getId(), $node->getContent());
-
-    }
-
-    public function onUpdateOrCreate($nodeId, $content){
-        $parsed = OMParser::parse($content);
-        $observation = $this->omMapper->getByIdOrUuid($nodeId, $parsed['uuid']);
-        $insert = false;
-        if ($observation == null) {
-            $observation = new ObservationModel();
-            $insert = true;
-        }
-
-        $observation->setUuid($parsed['uuid']);
-        $observation->setName($parsed['name']);
-        $observation->setDescription($parsed['description']);
-        $observation->setFileId($nodeId);
-        $observation->setStatus(true);
-        $observation->setSystemUuid($parsed['system-uuid']);
-        $observation->setResultFile($parsed['result-file']);
-        $observation->setTimestamp(time());
-
-        if ($insert === true) {
-            $this->omMapper->insert($observation);
-        } else {
-            $this->omMapper->update($observation);
-        }
-    }
-
-    public function onDelete($node)
-    {
-        $observation = $this->omMapper->getByFileId($node->getId());
-        if ($observation != null) {
-            $observation->setStatus(false);
-            $observation->setTimestamp(time());
-            $this->omMapper->update($observation);
-        }
-    }
-
-    public static function onShare($params){
         self::updateShare($params['itemSource'], $params['shareType']);
     }
 
-    public static function onUnshare($params){
-        self::updateShare($params['itemSource'], -1);
-    }
-
-    public static function updateShare($nodeId, $shareType){
+    public static function updateShare($nodeId, $shareType)
+    {
         $obs = DBUtil::executeQuery('SELECT * FROM *PREFIX*snanny_observation_model WHERE file_id = ?', array($nodeId));
-        while($row = $obs->fetch()) {
+        while ($row = $obs->fetch()) {
             if ($row != null) {
                 $shared = 1;
                 $sharedTime = time();
@@ -91,6 +48,54 @@ class DelegateOmHook
                 //DBUpdate
                 DBUtil::executeQuery("UPDATE *PREFIX*snanny_observation_model SET shared = $shared, share_updated_time = $sharedTime WHERE file_id=?", array($nodeId));
             }
+        }
+    }
+
+    public static function onUnshare($params)
+    {
+        self::updateShare($params['itemSource'], -1);
+    }
+
+    public function onUpdateOrCreateFromNode($node)
+    {
+        return $this->onUpdateOrCreate($node->getId(), $node->getContent());
+
+    }
+
+    public function onUpdateOrCreate($fileId, $content, $pharPath = null)
+    {
+        $parsed = OMParser::parse($content);
+        $observation = $this->omMapper->getByUuid($parsed['uuid']);
+        $insert = false;
+        if ($observation == null) {
+            $observation = new ObservationModel();
+            $insert = true;
+        }
+
+        $observation->setUuid($parsed['uuid']);
+        $observation->setName($parsed['name']);
+        $observation->setDescription($parsed['description']);
+        $observation->setFileId($fileId);
+        $observation->setStatus(true);
+        $observation->setSystemUuid($parsed['system-uuid']);
+        $observation->setResultFile($parsed['result-file']);
+        $observation->setTimestamp(time());
+        $observation->setPharPath($pharPath);
+
+        if ($insert === true) {
+            $this->omMapper->insert($observation);
+        } else {
+            $this->omMapper->update($observation);
+        }
+    }
+
+    public function onDelete($node)
+    {
+        $observation = $this->omMapper->getByFileId($node->getId());
+        if ($observation != null) {
+            $observation->setStatus(false);
+            $observation->setTimestamp(time());
+            $this->omMapper->update($observation);
         }
     }
 

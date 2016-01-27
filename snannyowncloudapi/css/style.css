@@ -27,7 +27,7 @@
 
 .oc-dialog .observationModel input[type="search"] {
     background: transparent url('../img/search.svg') no-repeat 6px center;
-    padding-left: 25px;
+    text-indent: 25px;
 }
 
 .oc-dialog .observationModel textarea{

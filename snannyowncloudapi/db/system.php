@@ -12,6 +12,7 @@ class System extends Entity
     protected $name;
     protected $description;
     protected $status;
+    protected $pharPath;
 
     public function __construct()
     {

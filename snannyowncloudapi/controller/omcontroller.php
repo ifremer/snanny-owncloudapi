@@ -14,12 +14,11 @@ namespace OCA\SnannyOwncloudApi\Controller;
 use OC\AppFramework\Http;
 use OC\Files\Cache;
 use OC\Files\Filesystem;
-use OCA\Files\Helper;
+use OCA\SnannyOwncloudApi\Config\Config;
 use OCA\SnannyOwncloudApi\Db\FileCacheDao;
 use OCA\SnannyOwncloudApi\Db\IndexHistory;
 use OCA\SnannyOwncloudApi\Db\IndexHistoryMapper;
 use OCA\SnannyOwncloudApi\Db\ObservationModelMapper;
-use OCA\SnannyOwncloudApi\Parser\OMParser;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -35,11 +34,10 @@ const GML_NAMESPACE = "http://www.opengis.net/gml/3.2";
 class OmController extends Controller
 {
 
+    const OBSERVATION_TEMPLATE = '/apps/snannyowncloudapi/templates/xml_om.xml';
     private $omMapper;
     private $indexHistoryMapper;
     private $omHook;
-
-    const OBSERVATION_TEMPLATE = '/apps/snannyowncloudapi/templates/xml_om.xml';
 
     public function __construct($AppName, IRequest $request, ObservationModelMapper $omMapper, IndexHistoryMapper $indexHistoryMapper,  DelegateOmHook $omHook)
     {
@@ -112,46 +110,27 @@ class OmController extends Controller
         return new JSONResponse($data);
     }
 
-    /**
-     * get file content from file_id
-     * @NoCSRFRequired
-     * @NoAdminRequired
-     */
-    public function detail($uuid)
-    {
-
-        $observation = $this->omMapper->getByUuid($uuid);
-
-        if ($observation !== null) {
-
-            $content = FileCacheDao::getContentByFileId($observation->getFileId());
-
-            $parsed = OMParser::parse($content, $observation);
-            $parsed['fileId'] = $observation->getFileId();
-
-            return new JSONResponse($parsed);
-        } else {
-            return new JSONResponse(array('NotFound'));
-        }
-
-    }
-
 
     /**
-     * get file content from file_id
+     * get file content from o&m uuid
      * @NoCSRFRequired
      *
      */
-    public function downloadData($omid, $filename)
+    public function downloadData($uuid, $filename)
     {
+        $observation = $this->omMapper->getByUuid($uuid);
+        if ($observation) {
 
-        $cacheInfo = FileCacheDao::getCacheInfo($omid);
-        //Get file information (storage urn and user)
-        $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
-        //Parse file om
-        $dataFile = dirname($fileInfo['urn']) . '/' . $filename;
-        if (file_exists($dataFile)) {
-            return new StreamResponse($dataFile);
+            $cacheInfo = FileCacheDao::getCacheInfo($observation->getFileId());
+            if ($cacheInfo) {
+                //Get file information (storage urn and user)
+                $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $observation->getPharPath());
+                //Parse file om
+                $dataFile = dirname($fileInfo['urn']) . '/' . $filename;
+                if (file_exists($dataFile)) {
+                    return new StreamResponse($dataFile);
+                }
+            }
         }
         return new NotFoundResponse();
     }
@@ -244,7 +223,7 @@ class OmController extends Controller
             'name' => $name,
             'description' => $description,
             'updateTime' => date(\DateTime::ISO8601, time()),
-            'system' => $system,
+            'system' => Config::SENSORML_PERMALINK . $system,
             'resultFile' => $node['path'],
             'type' => 'text/csv'
         ));

@@ -17,6 +17,7 @@ class ObservationModel extends Entity
     protected $shared;
     protected $shareUpdatedTime;
     protected $timestamp;
+    protected $pharPath;
 
     public function __construct()
     {

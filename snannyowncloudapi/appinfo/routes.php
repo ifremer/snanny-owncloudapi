@@ -24,6 +24,8 @@ return [
         ['name' => 'api#lastfailure', 'url' => '/lastfailure', 'verb' => 'GET'],
         ['name' => 'api#content', 'url' => '/content', 'verb' => 'GET'],
 
+        ['name' => 'api#tarInfo', 'url' => '/', 'verb' => 'GET'],
+
         //Public sensorML
         ['name' => 'api#sensorML', 'url' => '/sml/{uuid}', 'verb' => 'GET'],
         ['name' => 'api#ancestorSML', 'url' => '/sml/{uuid}/ancestors', 'verb' => 'GET'],

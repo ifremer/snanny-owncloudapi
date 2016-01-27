@@ -26,9 +26,7 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\NotFoundResponse;
-use OCP\AppFramework\Http\StreamResponse;
 use OCP\IRequest;
-use OCP\User;
 
 class ApiController extends Controller
 {
@@ -50,12 +48,9 @@ class ApiController extends Controller
     public function tarInfo($nodeId)
     {
         //959
-
-        $cacheInfo = FileCacheDao::getCacheInfo($nodeId);
-        //Get file information (storage urn and user)
-        $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
+        $url = FileCacheDao::getFullUrl($nodeId);
         //Get content
-        $tarContent = TarParser::parse($fileInfo['urn']);
+        $tarContent = TarParser::parse(FileCacheDao::getFullUrl($nodeId));
 
         $arr = array();
         foreach ($tarContent as $item) {
@@ -150,7 +145,7 @@ class ApiController extends Controller
             $cacheInfo = FileCacheDao::getCacheInfo($system->getFileId());
             if ($cacheInfo !== null) {
                 $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
-                $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
+                $content = FileCacheDao::getContentByUrn($fileInfo['urn'], $system->getPharPath());
                 if ($pretty == true) {
                     return new DataDisplayResponse('<pre>' . htmlentities($content) . '</pre>');
                 }
@@ -173,7 +168,7 @@ class ApiController extends Controller
             $cacheInfo = FileCacheDao::getCacheInfo($system->getFileId());
             if ($cacheInfo !== null) {
                 $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
-                $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
+                $content = FileCacheDao::getContentByUrn($fileInfo['urn'], $system->getPharPath());
                 return new DataDownloadResponse($content, "$uuid.xml", 'application/xml');
             }
         }

@@ -2,10 +2,12 @@
 <info>
     <id>snannyowncloudapi</id>
     <name>Snanny Owncloud Api</name>
-    <description>My first ownCloud app</description>
+    <description>This plugin allow to handle sensorML and OM files. It provides a Restful API to get sensorML and OM
+        datas
+    </description>
     <licence>AGPL</licence>
     <author>Arnaud THOREL</author>
-    <version>0.0.12</version>
+    <version>0.0.13</version>
     <namespace>SnannyOwncloudApi</namespace>
     <category>other</category>
     <dependencies>
