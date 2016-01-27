@@ -17,10 +17,7 @@ use OC\Share\Share;
 use OCA\SnannyOwncloudApi\Db\ActivityDao;
 use OCA\SnannyOwncloudApi\Db\FileCacheDao;
 use OCA\SnannyOwncloudApi\Db\SystemAncestorsMapper;
-use OCA\SnannyOwncloudApi\Parser\OMParser;
-use OCA\SnannyOwncloudApi\Parser\SensorMLParser;
-use OCA\SnannyOwncloudApi\Tar\TarParser;
-use OCA\SnannyOwncloudApi\Util\FileUtils;
+use OCA\SnannyOwncloudApi\Db\SystemMapper;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -34,42 +31,11 @@ class ApiController extends Controller
     private $systemMapper;
     private $ancestorsMapper;
 
-    public function __construct($AppName, IRequest $request, Mapper $systemMapper, SystemAncestorsMapper $ancestorsMapper)
+    public function __construct($AppName, IRequest $request, SystemMapper $systemMapper, SystemAncestorsMapper $ancestorsMapper)
     {
         parent::__construct($AppName, $request);
         $this->systemMapper = $systemMapper;
         $this->ancestorsMapper = $ancestorsMapper;
-    }
-
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
-    public function tarInfo($nodeId)
-    {
-        //959
-        $url = FileCacheDao::getFullUrl($nodeId);
-        //Get content
-        $tarContent = TarParser::parse(FileCacheDao::getFullUrl($nodeId));
-
-        $arr = array();
-        foreach ($tarContent as $item) {
-            $path = $item['path'];
-            if ($item['file']) {
-                if (FileUtils::endsWith($path, 'xml')) {
-                    $data = file_get_contents($path);
-                    $xml = new \SimpleXMLElement($data);
-                    if(OMParser::accept($xml)) {
-                        $arr[] = array('file' => $item['filename'], 'om_data' => OMParser::parse(file_get_contents($path)));
-                    }else{
-                        $arr[] = array('file' => $item['filename'], 'sensor_data' => SensorMLParser::parse(file_get_contents($path)));
-                    }
-                }
-            }
-        }
-
-
-        return new JSONResponse(['tar-list' => $tarContent, 'detail' => $arr]);
     }
 
 
@@ -144,8 +110,9 @@ class ApiController extends Controller
         if ($system !== null) {
             $cacheInfo = FileCacheDao::getCacheInfo($system->getFileId());
             if ($cacheInfo !== null) {
-                $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
-                $content = FileCacheDao::getContentByUrn($fileInfo['urn'], $system->getPharPath());
+                $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $system->getPharPath());
+
+                $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
                 if ($pretty == true) {
                     return new DataDisplayResponse('<pre>' . htmlentities($content) . '</pre>');
                 }
@@ -167,8 +134,8 @@ class ApiController extends Controller
         if ($system !== null) {
             $cacheInfo = FileCacheDao::getCacheInfo($system->getFileId());
             if ($cacheInfo !== null) {
-                $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
-                $content = FileCacheDao::getContentByUrn($fileInfo['urn'], $system->getPharPath());
+                $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $system->getPharPath());
+                $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
                 return new DataDownloadResponse($content, "$uuid.xml", 'application/xml');
             }
         }

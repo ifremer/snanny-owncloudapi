@@ -14,6 +14,7 @@ namespace OCA\SnannyOwncloudApi\Controller;
 use OC\AppFramework\Http;
 use OC\Files\Cache;
 use OC\Files\Filesystem;
+use OC\Share\Share;
 use OCA\SnannyOwncloudApi\Config\Config;
 use OCA\SnannyOwncloudApi\Db\FileCacheDao;
 use OCA\SnannyOwncloudApi\Db\IndexHistory;
@@ -110,23 +111,45 @@ class OmController extends Controller
         return new JSONResponse($data);
     }
 
+    /**
+     * get file content from o&m uuid
+     * @NoCSRFRequired
+     *
+     */
+    public function omData($uuid)
+    {
+        $observation = $this->omMapper->getByUuid($uuid);
+        if ($observation) {
+
+            $cacheInfo = FileCacheDao::getCacheInfo($observation->getFileId());
+            //Get file information (storage urn and user)
+            $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $observation->getPharPath());
+            //Get content
+            $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
+            // Get shares
+            $shares = Share::getAllSharesForFileId($observation->getFileId());
+            // Return json data
+            return new JSONResponse(array('user' => $fileInfo['user'], 'content' => $content, 'shares' => $shares));
+        }
+        return new NotFoundResponse();
+    }
+
 
     /**
      * get file content from o&m uuid
      * @NoCSRFRequired
      *
      */
-    public function downloadData($uuid, $filename)
+    public function downloadData($uuid)
     {
         $observation = $this->omMapper->getByUuid($uuid);
         if ($observation) {
-
             $cacheInfo = FileCacheDao::getCacheInfo($observation->getFileId());
             if ($cacheInfo) {
                 //Get file information (storage urn and user)
                 $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $observation->getPharPath());
                 //Parse file om
-                $dataFile = dirname($fileInfo['urn']) . '/' . $filename;
+                $dataFile = dirname($fileInfo['urn']) . '/' . $observation->getResultFile();
                 if (file_exists($dataFile)) {
                     return new StreamResponse($dataFile);
                 }
@@ -134,7 +157,6 @@ class OmController extends Controller
         }
         return new NotFoundResponse();
     }
-
 
     /**
      * get file content from uuid
@@ -145,11 +167,11 @@ class OmController extends Controller
      */
     public function downloadResult($uuid)
     {
-        $observation = $this->omMapper->getByIdOrUuid($uuid, $uuid);
+        $observation = $this->omMapper->getByUuid($uuid);
         if ($observation !== null) {
             $cacheInfo = FileCacheDao::getCacheInfo($observation->getFileId());
             //Get file information (storage urn and user)
-            $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
+            $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $observation->getPharPath());
             //Parse file om
             $resultFileName = $observation->getResultFile();
             $dataFile = dirname($fileInfo['urn']) . '/' . $observation->getResultFile();
@@ -165,16 +187,18 @@ class OmController extends Controller
      * get file content from file_id
      * @NoCSRFRequired
      */
-    public function infoData($omid, $filename)
+    public function infoData($uuid)
     {
-
-        $cacheInfo = FileCacheDao::getCacheInfo($omid);
-        //Get file information (storage urn and user)
-        $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path']);
-        //Parse file om
-        $dataFile = dirname($fileInfo['urn']) . '/' . $filename;
-        if (file_exists($dataFile)) {
-            return new JSONResponse(array('fileSize' => filesize($dataFile)));
+        $observation = $this->omMapper->getByUuid($uuid);
+        if ($observation !== null) {
+            $cacheInfo = FileCacheDao::getCacheInfo($observation->getFileId());
+            //Get file information (storage urn and user)
+            $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $observation->getPharPath());
+            //Parse file om
+            $dataFile = dirname($fileInfo['urn']) . '/' . $observation->getResultFile();
+            if (file_exists($dataFile)) {
+                return new JSONResponse(array('fileSize' => filesize($dataFile), 'fileName' => $observation->getResultFile()));
+            }
         }
         return new NotFoundResponse();
     }

@@ -22,8 +22,8 @@ return [
         //Batch get files and content
         ['name' => 'api#files', 'url' => '/files', 'verb' => 'GET'],
         ['name' => 'api#lastfailure', 'url' => '/lastfailure', 'verb' => 'GET'],
-        ['name' => 'api#content', 'url' => '/content', 'verb' => 'GET'],
 
+        # tmp
         ['name' => 'api#tarInfo', 'url' => '/', 'verb' => 'GET'],
 
         //Public sensorML
@@ -36,9 +36,11 @@ return [
         //Get OM Informations
         ['name' => 'om#updateIndex', 'url' => '/om', 'verb' => 'POST'],
         ['name' => 'om#info', 'url' => '/om/{uuid}/info', 'verb' => 'GET'],
+        ['name' => 'om#omData', 'url' => '/om/{uuid}', 'verb' => 'GET'],
+
         //Nav files
-        ['name' => 'om#downloadData', 'url'=>'/omresult/{omid}', 'verb'=>'GET'],
-        ['name' => 'om#infoData', 'url'=>'/ominfo/{omid}', 'verb'=>'GET'],
+        ['name' => 'om#infoData', 'url' => '/om/{uuid}/filesize', 'verb' => 'GET'],
+        ['name' => 'om#downloadData', 'url' => '/om/{uuid}/stream', 'verb' => 'GET'],
         ['name' => 'om#infoFile', 'url'=>'/data/{nodeId}/info', 'verb'=>'GET'],
         ['name' => 'om#postFile', 'url'=>'/data/{nodeId}', 'verb'=>'POST'],
         ['name' => 'om#downloadResult', 'url'=>'/data/{uuid}/download', 'verb'=>'GET']
