@@ -6,7 +6,7 @@ use OCA\SnannyOwncloudApi\Db\FileCacheDao;
 use OCA\SnannyOwncloudApi\Parser\OMParser;
 use OCA\SnannyOwncloudApi\Parser\SensorMLParser;
 use OCA\SnannyOwncloudApi\Tar\TarParser;
-use OCA\SnannyOwncloudApi\Util\FileUtils;
+use OCA\SnannyOwncloudApi\Util\FileUtil;
 use OCP\Files\FileInfo;
 use OCP\Util;
 
@@ -61,13 +61,13 @@ class FileHook
 
                     $this->omHook->onUpdateOrCreate($node->getId(), $node->getContent());
 
-                } else if (FileUtils::endsWith($node->getName(), TAR)) {
+                } else if (FileUtil::endsWith($node->getName(), TAR)) {
 
                     $tarContent = TarParser::parse(FileCacheDao::getFullUrl($node->getId()));
                     foreach ($tarContent as $item) {
                         $path = $item['path'];
                         if ($item['file']) {
-                            if (FileUtils::endsWith($path, 'xml')) {
+                            if (FileUtil::endsWith($path, 'xml')) {
                                 $data = file_get_contents($path);
                                 $xml = new \SimpleXMLElement($data);
                                 if (OMParser::accept($xml)) {
@@ -118,7 +118,7 @@ class FileHook
      */
     function getType($node)
     {
-        if (FileUtils::endsWith($node->getName(), XML)) {
+        if (FileUtil::endsWith($node->getName(), XML)) {
             $xml = new \SimpleXMLElement($node->getContent());
             if (OMParser::accept($xml)) {
                 return OM;

@@ -10,7 +10,7 @@ use OCA\SnannyOwncloudApi\Tar\TarParser;
  * Date: 18/01/2016
  * Time: 17:53
  */
-class FileUtils
+class FileUtil
 {
     const PHAR_PREFIX = 'phar:';
 
