@@ -59,7 +59,7 @@ class FileHook
 
                 } else if ($type === OM) {
 
-                    $this->omHook->onUpdateOrCreateFromNode($node->getId(), $node->getContent());
+                    $this->omHook->onUpdateOrCreate($node->getId(), $node->getContent());
 
                 } else if (FileUtils::endsWith($node->getName(), TAR)) {
 

@@ -56,12 +56,6 @@ class DelegateOmHook
         self::updateShare($params['itemSource'], -1);
     }
 
-    public function onUpdateOrCreateFromNode($node)
-    {
-        return $this->onUpdateOrCreate($node->getId(), $node->getContent());
-
-    }
-
     public function onUpdateOrCreate($fileId, $content, $pharPath = null)
     {
         $parsed = OMParser::parse($content);
