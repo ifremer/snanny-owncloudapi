@@ -27,10 +27,6 @@ use OCP\AppFramework\Http\NotFoundResponse;
 use OCP\AppFramework\Http\StreamResponse;
 use OCP\IRequest;
 
-const SOS_NAMESPACE = "http://www.opengis.net/sos/2.0";
-const OM_NAMESPACE = "http://www.opengis.net/om/2.0";
-const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
-const GML_NAMESPACE = "http://www.opengis.net/gml/3.2";
 
 class OmController extends Controller
 {

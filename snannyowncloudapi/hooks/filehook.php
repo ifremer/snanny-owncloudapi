@@ -10,9 +10,6 @@ use OCA\SnannyOwncloudApi\Util\FileUtil;
 use OCP\Files\FileInfo;
 use OCP\Util;
 
-const GML_NAMESPACE = "http://www.opengis.net/gml/3.2";
-const SML_NAMESPACE = "http://www.opengis.net/sensorml/2.0";
-const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
 const UNKNOW = 0;
 const OM = 1;

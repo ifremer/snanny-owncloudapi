@@ -8,9 +8,7 @@
 
 namespace OCA\SnannyOwncloudApi\Parser;
 
-const GML_NAMESPACE = "http://www.opengis.net/gml/3.2";
-const SML_NAMESPACE = "http://www.opengis.net/sensorml/2.0";
-const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
+
 
 class SensorMLParser
 {
@@ -19,11 +17,11 @@ class SensorMLParser
         $arr = array();
         $xml = new \SimpleXMLElement($content);
 
-        $sml = $xml->children(SML_NAMESPACE);
+        $sml = $xml->children(XMLNamespace::SML_NAMESPACE);
         if ($sml != null) {
             $arr['uuid'] = $sml->identification->IdentifierList->identifier->Term->value;
 
-            $gml = $xml->children(GML_NAMESPACE);
+            $gml = $xml->children(XMLNamespace::GML_NAMESPACE);
             $arr['name'] = trim($gml->name);
             $arr['desc'] = trim($gml->description);
             $smlComponents = $sml->components;
@@ -32,7 +30,7 @@ class SensorMLParser
                 $comps = $smlComponents->ComponentList;
                 $arr['components'] = array();
                 foreach ($comps->component as $component) {
-                    $childRef = $component->attributes(XLINK_NAMESPACE)->href;
+                    $childRef = $component->attributes(XMLNamespace::XLINK_NAMESPACE)->href;
                     $arr['components'][] = array(
                         'name'=>trim($component->attributes()->name),
                         'ref'=> $childRef,
@@ -44,7 +42,7 @@ class SensorMLParser
     }
 
     public static function accept($xml){
-        $sml = $xml->children(SML_NAMESPACE);
+        $sml = $xml->children(XMLNamespace::SML_NAMESPACE);
         if ($sml != null) {
             return true;
         }
