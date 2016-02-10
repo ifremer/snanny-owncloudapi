@@ -47,7 +47,9 @@ class FileCacheDao
     public static function getFileInfo($numericId, $path, $pharPath = null)
     {
         $storage = Storage::getStorageId($numericId);
-        $home = '/var/www/owncloud/data';
+
+        $config = \OC::$server->getConfig();
+        $home = $config->getSystemValue('datadirectory', \OC::$SERVERROOT . '/data/');
         $user = explode("::", $storage)[1];
         $urn = $home . '/' . $user . '/' . $path;
         if ($pharPath != null) {
@@ -86,8 +88,8 @@ class FileCacheDao
             'path_hash'=>md5($filePath),
             'parent'=>$node['parent'],
             'name'=>$fileName,
-            'mimetype'=>12,
-            'mimepart'=>5,
+            'mimetype' => \OC::$server->getMimeTypeLoader()->getId('application/xml'),
+            'mimepart' => \OC::$server->getMimeTypeLoader()->getId('application'),
             'size'=>$size,
             'mtime'=>$node['mtime'],
             'storage_mtime'=>$node['storage_mtime'],
