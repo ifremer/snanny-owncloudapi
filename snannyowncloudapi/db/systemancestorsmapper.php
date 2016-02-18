@@ -82,8 +82,9 @@ class SystemAncestorsMapper extends Mapper
         DBUtil::executeQuery($sql, array(':uuid'=>$parentUuid));
     }
 
-    public function logicalDeleteChildren($parentUuid){
-        $sql = 'UPDATE *PREFIX*snanny_system_ancestors SET status = 0 WHERE parent_uuid = :uuid';
-        DBUtil::executeQuery($sql, array(':uuid'=>$parentUuid));
+    public function logicalDeleteChildren($id)
+    {
+        $sql = 'UPDATE *PREFIX*snanny_system_ancestors ancestor INNER JOIN *PREFIX*snanny_system syst ON syst.uuid = ancestor.parent_uuid SET ancestor.status = 0 WHERE syst.file_id = :id';
+        DBUtil::executeQuery($sql, array(':id' => $id));
     }
 }

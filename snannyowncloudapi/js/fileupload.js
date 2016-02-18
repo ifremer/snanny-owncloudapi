@@ -44,7 +44,6 @@
 				success: function(response) {
 					if (response.status === 'failure') {
 						that.prompt(item);
-
 					}
 				},
 			});

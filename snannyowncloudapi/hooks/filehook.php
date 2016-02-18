@@ -8,6 +8,7 @@ use OCA\SnannyOwncloudApi\Parser\SensorMLParser;
 use OCA\SnannyOwncloudApi\Tar\TarParser;
 use OCA\SnannyOwncloudApi\Util\FileUtil;
 use OCP\Files\FileInfo;
+use OCP\Files\Node;
 use OCP\Util;
 
 
@@ -89,10 +90,13 @@ class FileHook
 
             if (FileInfo::TYPE_FILE === $node->getType()) {
                 $type = $this->getType($node);
+
                 if ($type === SML) {
                     $this->sensorMLHook->onDelete($node);
                 } else if ($type === OM) {
                     $this->omHook->onDelete($node);
+                } else if (FileUtil::endsWith($node->getName(), TAR)) {
+                    $this->sensorMLHook->onDelete($node);
                 }
             }
         });
@@ -115,8 +119,12 @@ class FileHook
      */
     function getType($node)
     {
-        if (FileUtil::endsWith($node->getName(), XML)) {
+        $xmlFile = FileUtil::endsWith($node->getName(), XML);
+
+
+        if ($xmlFile === true) {
             $xml = new \SimpleXMLElement($node->getContent());
+
             if (OMParser::accept($xml)) {
                 return OM;
             } else if (SensorMLParser::accept($xml)) {

@@ -72,4 +72,15 @@ class SystemMapper extends Mapper
 
         return $this->findEntities($sql, array(':status'=>1, ':term'=>'%'.strtoupper($term).'%', ':user_id'=>'home::'.$userId));
     }
+
+
+    /**
+     * change O&M status on deletion
+     * @param $nodeId fileId of the node
+     */
+    public function logicalDelete($nodeId)
+    {
+        $sql = 'UPDATE *PREFIX*snanny_system SET status = 0 WHERE file_id = :id';
+        DBUtil::executeQuery($sql, array(':id' => $nodeId));
+    }
 }

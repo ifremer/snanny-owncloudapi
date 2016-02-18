@@ -95,12 +95,8 @@ class DelegateSensorMLHook
      */
     public function onDelete($node)
     {
-        $system = $this->systemMapper->getByFileId($node->getId());
-        if ($system != null) {
-            $system->setStatus(false);
-            $this->systemMapper->update($system);
-            $this->systemAncestorsMapper->logicalDeleteChildren($system->getUuid());
-        }
+        $this->systemMapper->logicalDelete($node->getId());
+        $this->systemAncestorsMapper->logicalDeleteChildren($node->getId());
     }
 
 }

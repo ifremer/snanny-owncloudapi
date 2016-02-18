@@ -81,12 +81,7 @@ class DelegateOmHook
 
     public function onDelete($node)
     {
-        $observation = $this->omMapper->getByFileId($node->getId());
-        if ($observation != null) {
-            $observation->setStatus(false);
-            $observation->setTimestamp(time());
-            $this->omMapper->update($observation);
-        }
+        $this->omMapper->logicalDelete($node->getId());
     }
 
 

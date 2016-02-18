@@ -20,6 +20,8 @@ use OCA\SnannyOwncloudApi\Db\FileCacheDao;
 use OCA\SnannyOwncloudApi\Db\IndexHistory;
 use OCA\SnannyOwncloudApi\Db\IndexHistoryMapper;
 use OCA\SnannyOwncloudApi\Db\ObservationModelMapper;
+use OCA\SnannyOwncloudApi\Hooks\DelegateOmHook;
+use OCA\SnannyOwncloudApi\Util\FileUtil;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -230,13 +232,26 @@ class OmController extends Controller
      */
     public function postFile($nodeId, $name, $description, $system)
     {
+
+
         $node = FileCacheDao::getCacheInfo($nodeId);
         //Get file information (storage urn and user)
         $fileInfo = FileCacheDao::getFileInfo($node['storage'], $node['path']);
+
+        $mimetype = \OC::$server->getMimeTypeLoader()->getMimetypeById($node['mimetype']);
+        //Fix bug owncloud type mime cause \OC::$server->getMimeTypeLoader()->getMimetypeById($node['mimetype'])
+        // Doesn't return correct element
+        if ($mimetype == 'application/octet-stream') {
+            if (FileUtil::endsWith($mimetype, '.nav') || FileUtil::endsWith($mimetype, '.nc')) {
+                $mimetype = 'application/netcdf';
+            }
+        }
+
         //Create the O&M file
         $baseOC = getcwd() . self::OBSERVATION_TEMPLATE;
 
         $uuid = uniqid('', true);
+
 
         $content = $this->templateIt(file_get_contents($baseOC), array(
             'uuid' => $uuid,
@@ -245,7 +260,7 @@ class OmController extends Controller
             'updateTime' => date(\DateTime::ISO8601, time()),
             'system' => Config::SENSORML_PERMALINK . $system,
             'resultFile' => $node['path'],
-            'type' => 'text/csv'
+            'type' => $mimetype
         ));
 
         $baseUrn = dirname($fileInfo['urn']);

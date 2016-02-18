@@ -29,7 +29,6 @@ use OCP\Util;
 class Application extends App{
 	 public function __construct(array $urlParams=array()){
         parent::__construct('snannyowncloudapi', $urlParams);
-
         $container = $this->getContainer();
 
         /**ApiController*/
@@ -94,9 +93,6 @@ class Application extends App{
 }
 $app = new Application();
 $app->getContainer()->query('FileHook')->register();
-
-$eventDispatcher = \OC::$server->getEventDispatcher();
-$eventDispatcher->addListener('OCA\Files::loadAdditionalScripts', ['OCA\SnannyOwncloudApi\Hooks', 'onLoadFilesAppScripts']);
 
 Util::connectHook('OCP\Share', 'post_shared', 'OCA\SnannyOwncloudApi\Hooks\DelegateOmHook', 'onShare');
 Util::connectHook('OCP\Share', 'post_unshare', 'OCA\SnannyOwncloudApi\Hooks\DelegateOmHook', 'onUnshare');
