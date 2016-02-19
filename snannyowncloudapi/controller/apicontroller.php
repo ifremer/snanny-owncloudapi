@@ -48,6 +48,7 @@ class ApiController extends Controller
      */
     public function files($from, $to, $exts)
     {
+        $entities = array();
         $result = ActivityDao::findDistinctIds($from, $to, $exts);
         if ($result) {
             while ($row = $result->fetch()) {
@@ -67,6 +68,7 @@ class ApiController extends Controller
      */
     public function lastfailure()
     {
+        $entities = array();
         $result = ActivityDao::findDistinctIdsFailed();
         if ($result) {
             while ($row = $result->fetch()) {
