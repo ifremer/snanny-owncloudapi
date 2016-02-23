@@ -88,7 +88,7 @@ class ObservationModelMapper extends Mapper
     public function getByDataFileName($filepath)
     {
         try {
-            $sql = 'SELECT * FROM *PREFIX*snanny_observation_model WHERE result_file = ?';
+            $sql = 'SELECT * FROM *PREFIX*snanny_observation_model WHERE result_file = ? AND status = 1';
             return $this->findEntity($sql, array($filepath));
         } catch (DoesNotExistException $e) {
             return null;
