@@ -7,7 +7,7 @@ Endpoint : %Owncloud%/apps/snannyowncloudapi/
 
 ## Build and Deploy
 
-Tested with Owncloud 8.1
+Tested with Owncloud 8.2
 
 Copy the snannyowncloudapi folder into your owncloud product in the folder apps
 
