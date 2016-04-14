@@ -152,7 +152,8 @@ class ApiController extends Controller
      */
     public function ancestorSML($uuid)
     {
-        $system = $this->ancestorsMapper->getAncestors($uuid);
+        $empty_array = array();
+        $system = $this->ancestorsMapper->getAncestors($uuid, $empty_array);
         return new JSONResponse(array('ancestors' => $system));
     }
 
