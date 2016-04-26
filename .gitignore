@@ -1,0 +1,7 @@
+# build directory
+target/
+
+# other
+*.iml
+dependency-reduced-pom.xml
+.idea/
