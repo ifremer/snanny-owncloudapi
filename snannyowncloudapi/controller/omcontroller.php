@@ -210,7 +210,9 @@ class OmController extends Controller
     {
         $cacheInfo = FileCacheDao::getCacheInfo($nodeId);
         $filename = basename($cacheInfo['path']);
-        $observation = $this->omMapper->getByDataFileName($filename);
+        $fileCachePath = preg_replace('"\.[^\.]*$"', '.xml', $cacheInfo['path']);
+        $observation = $this->omMapper->getByDataFileName($filename, $fileCachePath);
+
         if ($observation) {
             $data = [];
             $data['uuid'] = $observation->getUuid();
