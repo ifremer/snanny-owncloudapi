@@ -34,6 +34,7 @@ class OmController extends Controller
 {
 
     const OBSERVATION_TEMPLATE = '/apps/snannyowncloudapi/templates/xml_om.xml';
+    const OBSERVATION_TIME_TEMPLATE = '/apps/snannyowncloudapi/templates/xml_om_time.xml';
     private $omMapper;
     private $indexHistoryMapper;
     private $omHook;
@@ -230,7 +231,7 @@ class OmController extends Controller
      * @NoCSRFRequired
      * @NoAdminRequired
      */
-    public function postFile($nodeId, $name, $description, $system)
+    public function postFile($nodeId, $name, $description, $system, $startDate = null, $endDate = null)
     {
 
 
@@ -247,11 +248,21 @@ class OmController extends Controller
             }
         }
 
+        $contentTime = '';
+        if($startDate != null || $endDate != null) {
+            $baseDateOC = getcwd() . self::OBSERVATION_TIME_TEMPLATE;
+            $startDateTime = $startDate != null ? new \DateTime('@' . $startDate) : null;
+            $endDateTime = $endDate != null ? new \DateTime('@' . $endDate) : null;
+            $contentTime =  $this->templateIt(file_get_contents($baseDateOC), array(
+                'startTime' => $startDateTime->format('Y-m-d\TH:i:sP\Z'),
+                'endTime' => $endDateTime->format('Y-m-d\TH:i:sP\Z')
+            ));
+        }
+
         //Create the O&M file
         $baseOC = getcwd() . self::OBSERVATION_TEMPLATE;
 
         $uuid = uniqid('', true);
-
 
         $content = $this->templateIt(file_get_contents($baseOC), array(
             'uuid' => $uuid,
@@ -260,7 +271,8 @@ class OmController extends Controller
             'updateTime' => date(\DateTime::ISO8601, time()),
             'system' => Config::SENSORML_PERMALINK . $system,
             'resultFile' => $node['path'],
-            'type' => $mimetype
+            'type' => $mimetype,
+            'phenomenonTime' => $contentTime
         ));
 
         $baseUrn = dirname($fileInfo['urn']);

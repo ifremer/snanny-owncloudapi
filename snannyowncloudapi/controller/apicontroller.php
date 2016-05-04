@@ -20,7 +20,6 @@ use OCA\SnannyOwncloudApi\Db\SystemAncestorsMapper;
 use OCA\SnannyOwncloudApi\Db\SystemMapper;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDisplayResponse;
-use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\NotFoundResponse;
 use OCP\IRequest;
@@ -99,16 +98,28 @@ class ApiController extends Controller
 
     /**
      * get file content from file_id
-     * @param $uuid identifier of the sensorML
+     * @param $id id technique
      * @param bool|false $pretty indicates if the element have to be pretified
      * @return DataDisplayResponse|NotFoundResponse Reponse if document exist, otherwise raised exception
      *
      * @NoCSRFRequired
      * @NoAdminRequired
      */
-    public function sensorML($uuid, $pretty = false)
+    public function sensorML($id, $pretty = false, $startTime = null, $endTime = null)
     {
-        $system = $this->systemMapper->getByUuid($uuid);
+        $system = null;
+        if (preg_match('"^[\d]*$"', $id)) {
+            $system = $this->systemMapper->getById($id);
+        } else {
+            $systems = $this->systemMapper->getByUuidAndDate($id, $startTime, $endTime, false);
+            if($systems != null && count($systems) == 1) {
+                $system = $systems[0];
+            } else {
+                return new DataDisplayResponse("Impossible de récupérer un système unique pour l'uuid " . $id .
+                    " et les timestamps " . $startTime . ", ". $endTime, Http::STATUS_UNPROCESSABLE_ENTITY);
+            }
+        }
+
         if ($system !== null) {
             $cacheInfo = FileCacheDao::getCacheInfo($system->getFileId());
             if ($cacheInfo !== null) {
@@ -126,20 +137,41 @@ class ApiController extends Controller
 
 
     /**
-     * get file content from file_id
+     * get file content from id
      * @NoCSRFRequired
      * @NoAdminRequired
      */
     public function downloadSensorML($uuid)
     {
-        $system = $this->systemMapper->getByUuid($uuid);
-        if ($system !== null) {
-            $cacheInfo = FileCacheDao::getCacheInfo($system->getFileId());
-            if ($cacheInfo !== null) {
-                $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $system->getPharPath());
-                $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
-                return new DataDownloadResponse($content, "$uuid.xml", 'application/xml');
+        $systems = $this->systemMapper->getByUuid($uuid);
+        if ($systems !== null) {
+            $fileIds = array();
+            $resultFiles = new \PharData(sys_get_temp_dir() . "/$uuid.zip");
+            foreach ($systems as $system) {
+                $fileId = $system->getFileId();
+                if (!in_array($fileId, $fileIds)) {
+                    $fileIds[] = $fileId;
+                    $cacheInfo = FileCacheDao::getCacheInfo($fileId);
+                    if ($cacheInfo !== null) {
+                        $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $system->getPharPath());
+
+                        $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
+                        $resultFiles->addFromString($uuid . "_" . $fileId . ".xml", $content);
+                    }
+                }
             }
+
+            $fullPath = $resultFiles->getPath();
+            if ($fd = fopen($fullPath, "r")) {
+                $path_parts = pathinfo($fullPath);
+                header("Content-type: application/octet-stream");
+                header("Content-Disposition: filename=\"" . $path_parts["basename"] . "\"");
+                while (!feof($fd)) {
+                    $buffer = fread($fd, 2048);
+                    echo $buffer;
+                }
+            }
+            fclose($fd);
         }
         return new NotFoundResponse();
     }
@@ -150,11 +182,23 @@ class ApiController extends Controller
      * @NoCSRFRequired
      * @NoAdminRequired
      */
-    public function ancestorSML($uuid)
+    public function ancestorSML($uuid, $beginTime = null, $endTime = null)
     {
         $empty_array = array();
-        $system = $this->ancestorsMapper->getAncestors($uuid, $empty_array);
-        return new JSONResponse(array('ancestors' => $system));
+        $systemAncestors = $this->ancestorsMapper->getAncestors($uuid, $empty_array, $beginTime, $endTime);
+        $systemIds = array();
+        foreach ($systemAncestors as $anUuid) {
+
+            $systems = $this->systemMapper->getByUuidAndDate($anUuid, $beginTime, $endTime, false);
+
+            foreach ($systems as $system) {
+                $systemId = $system->getId();
+                if (!in_array($systemId, $systemIds)) {
+                    $systemIds[] = $systemId;
+                }
+            }
+        }
+        return new JSONResponse(array('ancestors' => $systemIds));
     }
 
     /**
@@ -162,10 +206,10 @@ class ApiController extends Controller
      * @NoCSRFRequired
      * @NoAdminRequired
      */
-    public function infoSML($uuid)
+    public function infoSML($fileId)
     {
         $data = array();
-        $system = $this->systemMapper->getByIdOrUuid($uuid, $uuid);
+        $system = $this->systemMapper->getByFileId($fileId);
         if ($system !== null) {
             $data['uuid'] = $system->getUuid();
             $data['name'] = trim($system->getName());
@@ -185,17 +229,18 @@ class ApiController extends Controller
      * @NoCSRFRequired
      * @NoAdminRequired
      */
-    public function autocompleteSensors($term){
+    public function autocompleteSensors($term)
+    {
 
         $user = \OC::$server->getUserSession()->getUser()->getUID();
 
 
-        $result = $this->systemMapper->autocomplete($user , $term);
+        $result = $this->systemMapper->autocomplete($user, $term);
 
         //Search term
         $data = array();
         foreach ($result as $item) {
-            $data[] = array('label'=>$item->getName().' - '.$item->getUuid(), 'uuid'=>$item->getUuid());
+            $data[] = array('label' => $item->getName() . ' - ' . $item->getUuid(), 'uuid' => $item->getUuid(), 'startDate' => $item->getStartDate(), 'endDate' => $item->getEndDate());
         }
         return new JSONResponse($data);
     }

@@ -35,22 +35,48 @@ class SystemMapper extends Mapper
         }
     }
 
-    public function getByUuid($uuid)
+    public function getById($id)
     {
         try {
-            $sql = 'SELECT * FROM *PREFIX*snanny_system WHERE uuid = ?';
-            return $this->findEntity($sql, array($uuid));
+            $sql = 'SELECT * FROM *PREFIX*snanny_system WHERE id = ?';
+            return $this->findEntity($sql, array($id));
         } catch (DoesNotExistException $e) {
             return null;
         }
     }
 
-
-    public function getByIdOrUuid($id, $uuid)
+    public function getByUuidAndDate($uuid, $startDate, $endDate, $dateStrict)
     {
         try {
-            $sql = 'SELECT * FROM *PREFIX*snanny_system WHERE file_id = ? OR uuid = ?';
-            return $this->findEntity($sql, array($id, $uuid));
+            $params = array($uuid);
+            $startDateQuery = null;
+            if ($startDate == null) {
+                $startDateQuery = $dateStrict ? ' AND start_date is null' : '';
+            } else {
+                $startDateQuery = $dateStrict ? ' AND start_date = ?' : ' AND start_date <= ?';
+                array_push($params, $startDate);
+            }
+            $endDateQuery = null;
+            if ($endDate == null) {
+                $endDateQuery = $dateStrict ? ' AND end_date is null' : '';
+            } else {
+                $endDateQuery = $dateStrict ? ' AND end_date = ?' : ' AND end_date >= ?';
+                array_push($params, $endDate);
+            }
+
+            $sql = 'SELECT * FROM *PREFIX*snanny_system WHERE uuid = ?' . $startDateQuery . $endDateQuery;
+            return $dateStrict ? $this->findEntity($sql, $params) : $this->findEntities($sql, $params);
+        } catch (DoesNotExistException $e) {
+            return null;
+        }
+    }
+
+    public function getByUuid($uuid)
+    {
+        try {
+            $params = array($uuid);
+            $sql = 'SELECT * FROM *PREFIX*snanny_system WHERE uuid = ?' ;
+            return $this->findEntities($sql, $params);
         } catch (DoesNotExistException $e) {
             return null;
         }
@@ -62,15 +88,16 @@ class SystemMapper extends Mapper
      * @param $term search terms
      * @return array system elements
      */
-    public function autocomplete($userId, $term){
+    public function autocomplete($userId, $term)
+    {
         $sql = 'SELECT s.* FROM *PREFIX*snanny_system s'
-            .' INNER JOIN *PREFIX*filecache c ON s.file_id = c.fileid'
-            .' INNER JOIN *PREFIX*storages d ON d.numeric_id=c.storage'
-            .' WHERE d.id=:user_id AND s.status = :status'
-            .' AND UPPER(s.name) LIKE :term'
-            .' ORDER by s.name';
+            . ' INNER JOIN *PREFIX*filecache c ON s.file_id = c.fileid'
+            . ' INNER JOIN *PREFIX*storages d ON d.numeric_id=c.storage'
+            . ' WHERE d.id=:user_id AND s.status = :status'
+            . ' AND UPPER(s.name) LIKE :term'
+            . ' ORDER by s.name';
 
-        return $this->findEntities($sql, array(':status'=>1, ':term'=>'%'.strtoupper($term).'%', ':user_id'=>'home::'.$userId));
+        return $this->findEntities($sql, array(':status' => 1, ':term' => '%' . strtoupper($term) . '%', ':user_id' => 'home::' . $userId));
     }
 
 

@@ -20,6 +20,8 @@
 
             <om:type xlink:href="http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement"/>
 
+            {phenomenonTime}
+
             <om:resultTime>
                 <gml:TimeInstant gml:id="updateDate">
                     <!--Format 2014-04-04T08:30:29.021042-->

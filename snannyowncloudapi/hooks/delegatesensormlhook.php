@@ -36,7 +36,9 @@ class DelegateSensorMLHook
         $sml = SensorMLParser::parse($content);
         $uuid = $sml['uuid'];
         if ($uuid) {
-            $this->systemAncestorsMapper->deleteChildren($uuid);
+            $startDate = $sml['startDate'];
+            $endDate = $sml['endDate'];
+            $this->systemAncestorsMapper->deleteChildren($uuid, $startDate, $endDate);
             $components = $sml['components'];
             if ($components) {
                 //IF data is not unique, there is no link created between ancestors and children
@@ -48,12 +50,14 @@ class DelegateSensorMLHook
                         $systemAncestor->setComponentName($component['name']);
                         $systemAncestor->setStatus(true);
                         $systemAncestor->setChildUuid($component['uuid']);
+                        $systemAncestor->setParentStartDate($startDate);
+                        $systemAncestor->setParentEndDate($endDate);
                         $this->systemAncestorsMapper->insert($systemAncestor);
                     }
                 }
             }
 
-            $system = $this->systemMapper->getByUuid($uuid);
+            $system = $this->systemMapper->getByUuidAndDate($uuid, $startDate, $endDate, true);
             $insert = false;
             if ($system == null) {
                 $system = new System();
@@ -66,6 +70,8 @@ class DelegateSensorMLHook
             $system->setFileId($fileId);
             $system->setPharPath($pharPath);
             $system->setStatus(true);
+            $system->setStartDate($startDate);
+            $system->setEndDate($endDate);
             if ($insert === true) {
                 $this->systemMapper->insert($system);
             } else {
