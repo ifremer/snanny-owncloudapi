@@ -85,11 +85,11 @@ class ObservationModelMapper extends Mapper
      * @param $filename filename of the navigation file
      * @return null|\OCP\AppFramework\Db\Entity
      */
-    public function getByDataFileName($filepath)
+    public function getByDataFileName($filepath, $fileCachePath)
     {
         try {
-            $sql = 'SELECT * FROM *PREFIX*snanny_observation_model WHERE result_file = ? AND status = 1';
-            return $this->findEntity($sql, array($filepath));
+            $sql = 'SELECT osom.* FROM oc_snanny_observation_model osom join oc_filecache ofc on ofc.fileid=osom.file_id  WHERE osom.result_file = ? AND ofc.path = ? AND osom.status = 1';
+            return $this->findEntity($sql, array($filepath, $fileCachePath));
         } catch (DoesNotExistException $e) {
             return null;
         }
