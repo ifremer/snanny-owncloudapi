@@ -53,14 +53,18 @@
                 <notnull>false</notnull>
                 <length>300</length>
             </field>
-            <index>
-                <name>uuid_index</name>
-                <unique>true</unique>
-                <field>
-                    <name>uuid</name>
-                    <sorting>ascending</sorting>
-                </field>
-            </index>
+            <field>
+                <name>start_date</name>
+                <type>integer</type>
+                <notnull>false</notnull>
+                <length>11</length>
+            </field>
+            <field>
+                <name>end_date</name>
+                <type>integer</type>
+                <notnull>false</notnull>
+                <length>11</length>
+            </field>
         </declaration>
     </table>
     <table>
@@ -105,6 +109,18 @@
                 <notnull>false</notnull>
                 <length>1</length>
             </field>
+            <field>
+                <name>parent_start_date</name>
+                <type>integer</type>
+                <notnull>false</notnull>
+                <length>11</length>
+            </field>
+            <field>
+                <name>parent_end_date</name>
+                <type>integer</type>
+                <notnull>false</notnull>
+                <length>11</length>
+            </field>
             <index>
                 <name>parent_uuid_index</name>
                 <unique>false</unique>
@@ -115,7 +131,7 @@
             </index>
             <index>
                 <name>child_uuid_index</name>
-                <unique>true</unique>
+                <unique>false</unique>
                 <field>
                     <name>child_uuid</name>
                     <sorting>ascending</sorting>

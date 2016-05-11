@@ -27,7 +27,7 @@ return [
         ['name' => 'api#tarInfo', 'url' => '/', 'verb' => 'GET'],
 
         //Public sensorML
-        ['name' => 'api#sensorML', 'url' => '/sml/{uuid}', 'verb' => 'GET'],
+        ['name' => 'api#sensorML', 'url' => '/sml/{id}', 'verb' => 'GET'],
         ['name' => 'api#ancestorSML', 'url' => '/sml/{uuid}/ancestors', 'verb' => 'GET'],
         ['name' => 'api#infoSML', 'url' => '/sml/{uuid}/info', 'verb' => 'GET'],
         ['name' => 'api#downloadSensorML', 'url' => '/sml/{uuid}/download', 'verb' => 'GET'],

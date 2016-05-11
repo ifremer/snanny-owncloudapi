@@ -25,16 +25,33 @@ class SystemAncestorsMapper extends Mapper
         parent::__construct($db, 'snanny_system_ancestors');
     }
 
-    public function getAncestors($smlUuid, array &$ancestors)
+    public function getAncestors($smlUuid, array &$ancestors, $beginTime, $endTime)
     {
         try {
-            $sql = 'SELECT * FROM *PREFIX*snanny_system_ancestors WHERE child_uuid = :uuid';
-            $result = DBUtil::executeQuery($sql, array(':uuid'=>$smlUuid));
+            $params = array(':uuid'=>$smlUuid);
+            $beginTimeQuery = "";
+            if($beginTime != null) {
+                $beginTimeQuery = " AND parent_start_date <= :startTime";
+                $params[":startTime"] = $beginTime;
+            }
+            $endTimeQuery = "";
+            if($endTime != null) {
+                $endTimeQuery = " AND parent_end_date >= :endTime";
+                $params[":endTime"] = $endTime;
+            }
+
+            $sql = 'SELECT * FROM *PREFIX*snanny_system_ancestors WHERE child_uuid = :uuid' . $beginTimeQuery . $endTimeQuery;
+            $result = DBUtil::executeQuery($sql, $params);
             if($result != null) {
-                if ($row = $result->fetch()) {
+
+                $row = $result->fetch();
+                while ($row != null) {
                     $parent = $row['parent_uuid'];
-                    $this->getAncestors($parent, $ancestors);
-                    $ancestors[]=$parent;
+                    $this->getAncestors($parent, $ancestors, $beginTime, $endTime);
+                    if (!in_array($parent, $ancestors)) {
+                        $ancestors[] = $parent;
+                    }
+                    $row = $result->fetch();
                 }
             }
             return $ancestors;
@@ -77,9 +94,25 @@ class SystemAncestorsMapper extends Mapper
         }
     }
 
-    public function deleteChildren($parentUuid){
-        $sql = 'DELETE FROM *PREFIX*snanny_system_ancestors WHERE parent_uuid = :uuid';
-        DBUtil::executeQuery($sql, array(':uuid'=>$parentUuid));
+    public function deleteChildren($parentUuid, $startDate, $endDate){
+        $startDateQuery = null;
+        $params = array(':uuid'=>$parentUuid);
+        if ($startDate == null) {
+            $startDateQuery = ' AND parent_start_date is null';
+        } else {
+            $startDateQuery = ' AND parent_start_date = :startDate';
+            $params[':startDate'] = $startDate;
+        }
+        $endDateQuery = null;
+        if ($endDate == null) {
+            $endDateQuery = ' AND parent_end_date is null';
+        } else {
+            $endDateQuery = ' AND parent_end_date = :endDate';
+            $params[':endDate'] = $endDate;
+        }
+
+        $sql = 'DELETE FROM *PREFIX*snanny_system_ancestors WHERE parent_uuid = :uuid' . $startDateQuery . $endDateQuery;
+        DBUtil::executeQuery($sql, $params);
     }
 
     public function logicalDeleteChildren($id)

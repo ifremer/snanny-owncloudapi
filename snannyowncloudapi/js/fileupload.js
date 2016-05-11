@@ -119,9 +119,13 @@
 			    	var selected = ui.item;
 			    	if(selected){
 			    		$('#system').val(selected.uuid);
+						$('#startDate').val(selected.startDate);
+						$('#endDate').val(selected.endDate);
 						$("#searchNotFound").toggleClass("hidden", true);
 			   		}else{
 			   			$('#system').val('');
+			   			$('#startDate').val('');
+			   			$('#endDate').val('');
 						$("#searchNotFound").toggleClass("hidden", true);
 			   		}
 			    };
@@ -143,9 +147,26 @@
 				        	if(data.length>0){
 				        		$("#searchNotFound").toggleClass("hidden", true);
 					            response($.map(data, function(item) {
+									var label = item.label;
+									var startLabel = '';
+									var endLabel = '';
+									if(item.startDate !== null || item.endDate !== null) {
+										startLabel = ' [';
+										endLabel = ']';
+										if(item.startDate !== null) {
+											startLabel = startLabel +  new Date(parseInt(item.startDate) * 1000).toLocaleString() + ',';
+										}
+										if(item.endDate !== null) {
+											endLabel = ' ' + new Date(parseInt(item.endDate) * 1000).toLocaleString() + endLabel;
+										}
+									}
+									label = label + startLabel + endLabel;
+
 					                return { 
-					                    label: item.label,
-					                    uuid: item.uuid
+					                    label: label,
+					                    uuid: item.uuid,
+										startDate: item.startDate,
+										endDate: item.endDate
 					                 };
 					            }));
 				        	}else{

@@ -12,6 +12,8 @@ class SystemAncestor extends Entity
     protected $childUuid;
     protected $componentName;
     protected $status;
+    protected $parentStartDate;
+    protected $parentEndDate;
 
     public function __construct()
     {

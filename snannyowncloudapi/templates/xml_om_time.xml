@@ -1,0 +1,8 @@
+<om:phenomenonTime>
+    <gml:TimePeriod gml:id="temporalExtent">
+        <!-- RES_DATEDEB -->
+        <gml:beginPosition>{startTime}</gml:beginPosition>
+        <!-- RES_DATEFIN -->
+        <gml:endPosition>{endTime}</gml:endPosition>
+    </gml:TimePeriod>
+</om:phenomenonTime>

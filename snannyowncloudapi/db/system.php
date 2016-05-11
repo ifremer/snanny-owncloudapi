@@ -13,6 +13,8 @@ class System extends Entity
     protected $description;
     protected $status;
     protected $pharPath;
+    protected $startDate;
+    protected $endDate;
 
     public function __construct()
     {
