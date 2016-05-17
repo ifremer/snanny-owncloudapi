@@ -128,7 +128,7 @@ class ApiController extends Controller
     /**
      * get file content from file_id
      * @NoCSRFRequired
-     * @NoAdminRequired
+     * @PublicPage
      */
     public function downloadSensorML($uuid)
     {
