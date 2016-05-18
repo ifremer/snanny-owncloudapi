@@ -104,6 +104,7 @@ class ApiController extends Controller
      *
      * @NoCSRFRequired
      * @NoAdminRequired
+     * @PublicPage
      */
     public function sensorML($id, $pretty = false, $startTime = null, $endTime = null)
     {
