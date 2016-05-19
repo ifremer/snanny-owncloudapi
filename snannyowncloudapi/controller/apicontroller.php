@@ -113,29 +113,28 @@ class ApiController extends Controller
             $system = $this->systemMapper->getById($id);
         } else {
             $systems = $this->systemMapper->getByUuidAndDate($id, $startTime, $endTime, false);
-            if($systems == null || count($systems) == 0) {
-                $systems = $this->systemMapper->getByUuidAndDate($id, null, null, true);
-            }
 
-            if($systems != null && count($systems) == 1) {
+            if ($systems != null && count($systems) == 1) {
                 $system = $systems[0];
             } else {
-                return new DataDisplayResponse("Impossible de récupérer un système unique pour l'uuid " . $id .
-                    " et les timestamps " . $startTime . ", ". $endTime, Http::STATUS_UNPROCESSABLE_ENTITY);
+                $system = $this->systemMapper->getByUuidAndDate($id, null, null, true);
             }
         }
 
-        if ($system !== null) {
-            $cacheInfo = FileCacheDao::getCacheInfo($system->getFileId());
-            if ($cacheInfo !== null) {
-                $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $system->getPharPath());
+        if ($system === null) {
+            return new DataDisplayResponse("Impossible de récupérer un système unique pour l'uuid " . $id .
+                " et les timestamps " . $startTime . ", " . $endTime, Http::STATUS_UNPROCESSABLE_ENTITY);
+        }
 
-                $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
-                if ($pretty == true) {
-                    return new DataDisplayResponse('<pre>' . htmlentities($content) . '</pre>');
-                }
-                return new DataDisplayResponse($content);
+        $cacheInfo = FileCacheDao::getCacheInfo($system->getFileId());
+        if ($cacheInfo !== null) {
+            $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $system->getPharPath());
+
+            $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
+            if ($pretty == true) {
+                return new DataDisplayResponse('<pre>' . htmlentities($content) . '</pre>');
             }
+            return new DataDisplayResponse($content);
         }
         return new NotFoundResponse();
     }
@@ -195,16 +194,20 @@ class ApiController extends Controller
         foreach ($systemAncestors as $anUuid) {
 
             $systems = $this->systemMapper->getByUuidAndDate($anUuid, $beginTime, $endTime, false);
-            if($systems == null || count($systems) == 0) {
-                $systems = $this->systemMapper->getByUuidAndDate($anUuid, null, null, true);
-            }
-
-            foreach ($systems as $system) {
+            if ($systems == null || count($systems) == 0) {
+                $system = $this->systemMapper->getByUuidAndDate($anUuid, null, null, true);
                 $systemId = $system->getId();
-                if (!in_array($systemId, $systemIds)) {
-                    $systemIds[] = $systemId;
+                $systemIds[] = $systemId;
+            } else {
+                foreach ($systems as $system) {
+                    $systemId = $system->getId();
+                    if (!in_array($systemId, $systemIds)) {
+                        $systemIds[] = $systemId;
+                    }
                 }
             }
+
+
         }
         return new JSONResponse(array('ancestors' => $systemIds));
     }
