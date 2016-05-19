@@ -113,6 +113,10 @@ class ApiController extends Controller
             $system = $this->systemMapper->getById($id);
         } else {
             $systems = $this->systemMapper->getByUuidAndDate($id, $startTime, $endTime, false);
+            if($systems == null || count($systems) == 0) {
+                $systems = $this->systemMapper->getByUuidAndDate($id, null, null, true);
+            }
+
             if($systems != null && count($systems) == 1) {
                 $system = $systems[0];
             } else {
@@ -191,6 +195,9 @@ class ApiController extends Controller
         foreach ($systemAncestors as $anUuid) {
 
             $systems = $this->systemMapper->getByUuidAndDate($anUuid, $beginTime, $endTime, false);
+            if($systems == null || count($systems) == 0) {
+                $systems = $this->systemMapper->getByUuidAndDate($anUuid, null, null, true);
+            }
 
             foreach ($systems as $system) {
                 $systemId = $system->getId();
