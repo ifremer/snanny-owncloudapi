@@ -122,8 +122,8 @@ class ApiController extends Controller
         }
 
         if ($system === null) {
-            return new DataDisplayResponse("Impossible de récupérer un système unique pour l'uuid " . $id .
-                " et les timestamps " . $startTime . ", " . $endTime, Http::STATUS_UNPROCESSABLE_ENTITY);
+            return new DataDisplayResponse("Unable to retrieve a single system for uuid " . $id .
+                " and timestamps " . $startTime . ", " . $endTime, Http::STATUS_UNPROCESSABLE_ENTITY);
         }
 
         $cacheInfo = FileCacheDao::getCacheInfo($system->getFileId());
