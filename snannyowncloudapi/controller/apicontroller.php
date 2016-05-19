@@ -131,7 +131,7 @@ class ApiController extends Controller
             $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $cacheInfo['path'], $system->getPharPath());
 
             $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
-            if ($pretty == true) {
+            if ($pretty === true) {
                 return new DataDisplayResponse('<pre>' . htmlentities($content) . '</pre>');
             }
             return new DataDisplayResponse($content);
