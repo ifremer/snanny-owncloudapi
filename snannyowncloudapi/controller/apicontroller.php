@@ -109,9 +109,16 @@ class ApiController extends Controller
     public function sensorML($id, $pretty = false, $startTime = null, $endTime = null)
     {
         $system = null;
-        if (preg_match('"^[\d]*$"', $id)) {
+		if (preg_match('"^[\d]*$"', $id)) {
             $system = $this->systemMapper->getById($id);
         } else {
+			//If uuid is encoded uuid => uuid#startTime#endTime
+			if (preg_match('"^.+#[\d]*#[\d]*$"', $id)) {
+				$exploded_id = explode("#", $id);
+				$id = $exploded_id[0];
+				$startTime = $exploded_id[1];
+				$endTime = $exploded_id[2];
+			}
             $systems = $this->systemMapper->getByUuidAndDate($id, $startTime, $endTime, false);
 
             if ($systems != null && count($systems) == 1) {
