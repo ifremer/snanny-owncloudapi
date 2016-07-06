@@ -255,4 +255,50 @@ class ApiController extends Controller
         }
         return new JSONResponse($data);
     }
+
+
+    /**
+     * get info of existant sml for uuid and dates
+     * @param $uuid uuid du system
+     * @param $from : begin time of system valid period
+     * @param $to : end time of system valid period
+     * @param $dir : repertoire du fichier en cour d'édition
+     * @param $fileName : nom du fichier en cours d'édition
+     * @return DataDisplayResponse|NotFoundResponse Reponse if document exist, otherwise raised exception
+     *
+     * @NoCSRFRequired
+     * @NoAdminRequired
+     * @PublicPage
+     */
+    public function smlExist($uuid, $from = null, $to = null, $dir = null, $fileName = null)
+    {
+        $systems = $this->systemMapper->getByUuidAndDate($uuid, $from, $to, false);
+        $data = array();
+
+        if ($systems != null && count($systems) >= 1) {
+            foreach ($systems as $system) {
+                $ignore = false;
+                if ($fileName !== null) {
+                    $finalDir = $dir !== null ? $dir : '';
+                    $path = 'files' . $finalDir . '/' . $fileName . '.tar';
+                    $cacheInfo = FileCacheDao::getCacheInfo($system->getFileId());
+                    if ($cacheInfo !== null) {
+                        $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $path);
+                        $ignore = $fileInfo !== null;
+                    }
+
+                }
+                if (!$ignore) {
+                    $data[] = array(
+                        'name' => $system->getName(),
+                        'uuid' => $system->getUuid(),
+                        'from' => $system->getStartDate(),
+                        'to' => $system->getEndDate(),
+                    );
+                }
+            }
+        }
+
+        return new JSONResponse($data);
+    }
 }
