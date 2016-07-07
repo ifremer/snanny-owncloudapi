@@ -113,12 +113,12 @@ class ApiController extends Controller
             $system = $this->systemMapper->getById($id);
         } else {
 
-			if (strpos($id, '_') > -1) {
-				$exploded_id = explode("_", $id);
-				$id = $exploded_id[0];
-				$startTime = $exploded_id[1];
-				$endTime = $exploded_id[2];
-			}
+            if (strpos($id, '_') > -1) {
+                $exploded_id = explode("_", $id);
+                $id = $exploded_id[0];
+                $startTime = $exploded_id[1];
+                $endTime = $exploded_id[2];
+            }
             $systems = $this->systemMapper->getByUuidAndDate($id, $startTime, $endTime, false);
 
             if ($systems != null && count($systems) == 1) {
@@ -279,30 +279,45 @@ class ApiController extends Controller
      */
     public function smlExist($uuid, $from = null, $to = null, $dir = null, $fileName = null)
     {
-        $systems = $this->systemMapper->getByUuidAndDate($uuid, $from, $to, false);
+        $finalDir = $dir !== null ? $dir : '';
+        $path = $fileName !== null ? 'files' . $finalDir . '/' . basename($fileName, '.moe') : null;
+        $systems = $this->systemMapper->getByUuidAndDateAndNotPath($uuid, $from, $to, $path);
         $data = array();
 
         if ($systems != null && count($systems) >= 1) {
             foreach ($systems as $system) {
-                $ignore = false;
-                if ($fileName !== null) {
-                    $finalDir = $dir !== null ? $dir : '';
-                    $path = 'files' . $finalDir . '/' . $fileName . '.tar';
-                    $cacheInfo = FileCacheDao::getCacheInfo($system->getFileId());
-                    if ($cacheInfo !== null) {
-                        $fileInfo = FileCacheDao::getFileInfo($cacheInfo['storage'], $path);
-                        $ignore = $fileInfo !== null;
-                    }
 
+                $resultDir = '';
+                $resultFileName = '';
+                $isMoe = false;
+
+                $fileCache = FileCacheDao::getFileCacheByFileId($system->getFileId());
+                if ($fileCache !== null) {
+                    $fileCachePath = $fileCache['path'];
+                    $fileCachePath = str_replace('.tar', '.moe', $fileCachePath);
+                    $fileCachePath = str_replace('.xml', '.moe', $fileCachePath);
+                    $moeFileCache = FileCacheDao::getFileCacheByPath($fileCachePath);
+
+                    if ($moeFileCache !== null) {
+                        $resultDir = dirname($moeFileCache['path']);
+                        $resultFileName = $moeFileCache['name'];
+                        $isMoe = true;
+                    } else {
+                        $resultDir = dirname($fileCache['path']);
+                        $resultFileName = $fileCache['name'];
+                    }
                 }
-                if (!$ignore) {
-                    $data[] = array(
-                        'name' => $system->getName(),
-                        'uuid' => $system->getUuid(),
-                        'from' => $system->getStartDate(),
-                        'to' => $system->getEndDate(),
-                    );
-                }
+
+                $data[] = array(
+                    'name' => $system->getName(),
+                    'uuid' => $system->getUuid(),
+                    'from' => $system->getStartDate(),
+                    'to' => $system->getEndDate(),
+                    'dir' => str_replace("files", "", $resultDir),
+                    'fileName' => $resultFileName,
+                    'isMoe' => $isMoe
+                );
+
             }
         }
 

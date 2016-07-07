@@ -53,7 +53,7 @@ class SystemMapper extends Mapper
             if ($startDate == null) {
                 $startDateQuery = $dateStrict ? ' AND start_date is null' : '';
             } else {
-                $startDateQuery = $dateStrict ? ' AND start_date = ?' : ' AND start_date <= ? AND end_date >= ?';
+                $startDateQuery = $dateStrict ? ' AND start_date = ?' : ' AND (start_date <= ? AND end_date >= ?';
                 array_push($params, $startDate);
                 if (!$dateStrict) {
                     array_push($params, $startDate);
@@ -63,7 +63,7 @@ class SystemMapper extends Mapper
             if ($endDate == null) {
                 $endDateQuery = $dateStrict ? ' AND end_date is null' : '';
             } else {
-                $endDateQuery = $dateStrict ? ' AND end_date = ?' : ' OR start_date <= ? AND end_date >= ?';
+                $endDateQuery = $dateStrict ? ' AND end_date = ?' : ' OR start_date <= ? AND end_date >= ?)';
                 array_push($params, $endDate);
                 if (!$dateStrict) {
                     array_push($params, $endDate);
@@ -115,5 +115,42 @@ class SystemMapper extends Mapper
     {
         $sql = 'UPDATE *PREFIX*snanny_system SET status = 0 WHERE file_id = :id';
         DBUtil::executeQuery($sql, array(':id' => $nodeId));
+    }
+
+
+    public function getByUuidAndDateAndNotPath($uuid, $startDate, $endDate, $path)
+    {
+        try {
+            $params = array($uuid);
+            $pathQuery = null;
+            if ($path == null) {
+                $pathQuery = '';
+            } else {
+                $pathQuery = ' AND fc.path <> ? AND fc.path <> ?';
+                array_push($params, $path . '.tar');
+                array_push($params, $path . '.xml');
+            }
+            $startDateQuery = null;
+            if ($startDate == null) {
+                $startDateQuery = '';
+            } else {
+                $startDateQuery = ' AND (ss.start_date <= ? AND ss.end_date >= ?';
+                array_push($params, $startDate);
+                array_push($params, $startDate);
+            }
+            $endDateQuery = null;
+            if ($endDate == null) {
+                $endDateQuery = '';
+            } else {
+                $endDateQuery = ' OR ss.start_date <= ? AND ss.end_date >= ?)';
+                array_push($params, $endDate);
+                array_push($params, $endDate);
+            }
+
+            $sql = 'SELECT ss.* FROM *PREFIX*snanny_system ss JOIN *PREFIX*filecache fc ON ss.file_id=fc.fileid WHERE ss.uuid = ?' . $pathQuery . $startDateQuery . $endDateQuery;
+            return $this->findEntities($sql, $params);
+        } catch (DoesNotExistException $e) {
+            return null;
+        }
     }
 }
