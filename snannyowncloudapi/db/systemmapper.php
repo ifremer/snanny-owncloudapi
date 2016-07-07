@@ -53,15 +53,21 @@ class SystemMapper extends Mapper
             if ($startDate == null) {
                 $startDateQuery = $dateStrict ? ' AND start_date is null' : '';
             } else {
-                $startDateQuery = $dateStrict ? ' AND start_date = ?' : ' AND start_date <= ?';
+                $startDateQuery = $dateStrict ? ' AND start_date = ?' : ' AND start_date <= ? AND end_date >= ?';
                 array_push($params, $startDate);
+                if (!$dateStrict) {
+                    array_push($params, $startDate);
+                }
             }
             $endDateQuery = null;
             if ($endDate == null) {
                 $endDateQuery = $dateStrict ? ' AND end_date is null' : '';
             } else {
-                $endDateQuery = $dateStrict ? ' AND end_date = ?' : ' AND end_date >= ?';
+                $endDateQuery = $dateStrict ? ' AND end_date = ?' : ' OR start_date <= ? AND end_date >= ?';
                 array_push($params, $endDate);
+                if (!$dateStrict) {
+                    array_push($params, $endDate);
+                }
             }
 
             $sql = 'SELECT * FROM *PREFIX*snanny_system WHERE uuid = ?' . $startDateQuery . $endDateQuery;
@@ -75,7 +81,7 @@ class SystemMapper extends Mapper
     {
         try {
             $params = array($uuid);
-            $sql = 'SELECT * FROM *PREFIX*snanny_system WHERE uuid = ?' ;
+            $sql = 'SELECT * FROM *PREFIX*snanny_system WHERE uuid = ?';
             return $this->findEntities($sql, $params);
         } catch (DoesNotExistException $e) {
             return null;
