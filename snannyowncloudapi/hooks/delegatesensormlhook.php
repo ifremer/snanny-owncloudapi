@@ -58,6 +58,10 @@ class DelegateSensorMLHook
             }
 
             $system = $this->systemMapper->getByUuidAndDate($uuid, $startDate, $endDate, true);
+
+            if ($system == null) {
+                $system = $this->systemMapper->getByUuidAndFileId($uuid, $fileId);
+            }
             $insert = false;
             if ($system == null) {
                 $system = new System();

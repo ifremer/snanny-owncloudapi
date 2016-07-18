@@ -153,4 +153,14 @@ class SystemMapper extends Mapper
             return null;
         }
     }
+
+    public function getByUuidAndFileId($uuid, $fileId) {
+        try {
+            $params = array($uuid, $fileId);
+            $sql = 'SELECT * FROM *PREFIX*snanny_system WHERE uuid = ? AND file_id=?';
+            return $this->findEntity($sql, $params);
+        } catch (DoesNotExistException $e) {
+            return null;
+        }
+    }
 }
