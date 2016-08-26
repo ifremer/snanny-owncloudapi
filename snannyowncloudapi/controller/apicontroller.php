@@ -112,6 +112,13 @@ class ApiController extends Controller
         if (preg_match('"^[\d]*$"', $id)) {
             $system = $this->systemMapper->getById($id);
         } else {
+
+            if (strpos($id, '_') > -1) {
+                $exploded_id = explode("_", $id);
+                $id = $exploded_id[0];
+                $startTime = $exploded_id[1];
+                $endTime = $exploded_id[2];
+            }
             $systems = $this->systemMapper->getByUuidAndDate($id, $startTime, $endTime, false);
 
             if ($systems != null && count($systems) == 1) {
@@ -253,6 +260,67 @@ class ApiController extends Controller
         foreach ($result as $item) {
             $data[] = array('label' => $item->getName() . ' - ' . $item->getUuid(), 'uuid' => $item->getUuid(), 'startDate' => $item->getStartDate(), 'endDate' => $item->getEndDate());
         }
+        return new JSONResponse($data);
+    }
+
+
+    /**
+     * get info of existant sml for uuid and dates
+     * @param $uuid uuid du system
+     * @param $from : begin time of system valid period
+     * @param $to : end time of system valid period
+     * @param $dir : repertoire du fichier en cour d'édition
+     * @param $fileName : nom du fichier en cours d'édition
+     * @return DataDisplayResponse|NotFoundResponse Reponse if document exist, otherwise raised exception
+     *
+     * @NoCSRFRequired
+     * @NoAdminRequired
+     * @PublicPage
+     */
+    public function smlExist($uuid, $from = null, $to = null, $dir = null, $fileName = null)
+    {
+        $finalDir = $dir !== null ? $dir : '';
+        $path = $fileName !== null ? 'files' . $finalDir . '/' . basename($fileName, '.moe') : null;
+        $systems = $this->systemMapper->getByUuidAndDateAndNotPath($uuid, $from, $to, $path);
+        $data = array();
+
+        if ($systems != null && count($systems) >= 1) {
+            foreach ($systems as $system) {
+
+                $resultDir = '';
+                $resultFileName = '';
+                $isMoe = false;
+
+                $fileCache = FileCacheDao::getFileCacheByFileId($system->getFileId());
+                if ($fileCache !== null) {
+                    $fileCachePath = $fileCache['path'];
+                    $fileCachePath = str_replace('.tar', '.moe', $fileCachePath);
+                    $fileCachePath = str_replace('.xml', '.moe', $fileCachePath);
+                    $moeFileCache = FileCacheDao::getFileCacheByPath($fileCachePath);
+
+                    if ($moeFileCache !== null) {
+                        $resultDir = dirname($moeFileCache['path']);
+                        $resultFileName = $moeFileCache['name'];
+                        $isMoe = true;
+                    } else {
+                        $resultDir = dirname($fileCache['path']);
+                        $resultFileName = $fileCache['name'];
+                    }
+                }
+
+                $data[] = array(
+                    'name' => $system->getName(),
+                    'uuid' => $system->getUuid(),
+                    'from' => $system->getStartDate(),
+                    'to' => $system->getEndDate(),
+                    'dir' => str_replace("files", "", $resultDir),
+                    'fileName' => $resultFileName,
+                    'isMoe' => $isMoe
+                );
+
+            }
+        }
+
         return new JSONResponse($data);
     }
 }

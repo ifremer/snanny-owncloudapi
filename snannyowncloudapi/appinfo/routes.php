@@ -32,6 +32,7 @@ return [
         ['name' => 'api#infoSML', 'url' => '/sml/{uuid}/info', 'verb' => 'GET'],
         ['name' => 'api#downloadSensorML', 'url' => '/sml/{uuid}/download', 'verb' => 'GET'],
         ['name' => 'api#autocompleteSensors', 'url' => '/sml', 'verb' => 'POST'],
+        ['name' => 'api#smlExist', 'url' => '/smlExist', 'verb' => 'POST'],
 
         //Get OM Informations
         ['name' => 'om#updateIndex', 'url' => '/om', 'verb' => 'POST'],
