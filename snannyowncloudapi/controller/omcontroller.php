@@ -16,6 +16,7 @@ use OC\Files\Cache;
 use OC\Files\Filesystem;
 use OC\Share\Share;
 use OCA\SnannyOwncloudApi\Config\Config;
+use OCA\SnannyOwncloudApi\Db\DBUtil;
 use OCA\SnannyOwncloudApi\Db\FileCacheDao;
 use OCA\SnannyOwncloudApi\Db\IndexHistory;
 use OCA\SnannyOwncloudApi\Db\IndexHistoryMapper;
@@ -27,6 +28,7 @@ use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\NotFoundResponse;
 use OCP\AppFramework\Http\StreamResponse;
+use OCP\Files;
 use OCP\IRequest;
 
 
@@ -126,7 +128,22 @@ class OmController extends Controller
             //Get content
             $content = FileCacheDao::getContentByUrn($fileInfo['urn']);
             // Get shares
-            $shares = Share::getAllSharesForFileId($observation->getFileId());
+            //Requête pour récupérer les parents d'un fileId
+            $fileId = $observation->getFileId();
+            $shares = array();
+            while ($fileId !== null && $fileId > 1) {
+                $share = Share::getAllSharesForFileId($fileId);
+                foreach ($share as $item) {
+                    array_push($shares, $item);
+                }
+                $result = DBUtil::executeQuery("SELECT parent FROM *PREFIX*filecache where fileid=:fileid", array(':fileid' => $fileId));
+                $fileId = null;
+                if ($result != null) {
+                    while ($row = $result->fetch()) {
+                        $fileId = $row["parent"];
+                    }
+                }
+            }
             // Return json data
             return new JSONResponse(array('user' => $fileInfo['user'], 'content' => $content, 'shares' => $shares));
         }
