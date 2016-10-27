@@ -24,25 +24,26 @@ class DelegateOmHook
 
     public static function updateShare($nodeId, $shareType)
     {
-        $obs = DBUtil::executeQuery('SELECT * FROM *PREFIX*snanny_observation_model WHERE file_id = ?', array($nodeId));
+        //Get OMFileIds from file || folder 
+        $pathRequest = DBUtil::executeQuery('SELECT path FROM *PREFIX*filecache WHERE fileid=?',array($nodeId));
+        $path = "files";
+        while ($row = $pathRequest->fetch()) {
+            $path = $row['path'];
+        }
+
+        //else 
+        $obs = DBUtil::executeQuery('SELECT * FROM *PREFIX*snanny_observation_model '.
+            'WHERE file_id IN('.
+                'SELECT fileid FROM *PREFIX*filecache WHERE path LIKE ? AND path LIKE "%xml") '.
+            'OR file_id = ?'
+                 , array($path.'/%', $nodeId));
+        // End
+
         while ($row = $obs->fetch()) {
             if ($row != null) {
-                $shared = 1;
+                $fileId = $row['file_id'];
                 $sharedTime = time();
-                if ($shareType == -1) {
-                    //When unshare we check if there is still an existing share
-                    $result = DBUtil::executeQuery('SELECT COUNT(*) as c FROM *PREFIX*share WHERE file_source = ?', array($nodeId));
-                    $value = 0;
-                    while ($row = $result->fetch()) {
-                        $value = $row['c'];
-                    }
-                    //If there is no share then we passed the status to unshared
-                    if ($value == 0) {
-                        $shared = 0;
-                    }
-                }
-                //DBUpdate
-                DBUtil::executeQuery("UPDATE *PREFIX*snanny_observation_model SET shared = $shared, share_updated_time = $sharedTime WHERE file_id=?", array($nodeId));
+                DBUtil::executeQuery("UPDATE *PREFIX*snanny_observation_model SET share_updated_time = $sharedTime WHERE file_id=?", array($fileId));
             }
         }
     }
@@ -79,10 +80,21 @@ class DelegateOmHook
         }
     }
 
+    public function getDirectOM($systemuuid) {
+        return $this->omMapper->getBySystemUuid($systemuuid);
+    }
+
+    public function getOMByData($filePath, $fileCachePath) {
+        return $this->omMapper->getByDataFileName($filePath, $fileCachePath);
+    }
+
+    public function updateOM($observation) {
+        $this->omMapper->updateOMTime($observation->getId());
+    }
+
     public function onDelete($node)
     {
         $this->omMapper->logicalDelete($node->getId());
     }
-
 
 }

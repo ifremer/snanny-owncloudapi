@@ -262,7 +262,7 @@ class OmController extends Controller
         //Fix bug owncloud type mime cause \OC::$server->getMimeTypeLoader()->getMimetypeById($node['mimetype'])
         // Doesn't return correct element
         if ($mimetype == 'application/octet-stream') {
-            if (FileUtil::endsWith($mimetype, '.nav') || FileUtil::endsWith($mimetype, '.nc')) {
+            if (FileUtil::endsWith($mimetype, array('.nav', '.nc'))) {
                 $mimetype = 'application/netcdf';
             }
         }

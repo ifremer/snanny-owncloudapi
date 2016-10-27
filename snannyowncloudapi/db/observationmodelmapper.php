@@ -80,6 +80,15 @@ class ObservationModelMapper extends Mapper
         }
     }
 
+    public function getBySystemUuid($systemuuid) {
+        try {
+            $sql = 'SELECT * FROM *PREFIX*snanny_observation_model WHERE system_uuid = ?';
+            return $this->findEntity($sql, array($systemuuid));
+        } catch (DoesNotExistException $e) {
+            return null;
+        }
+    }
+
     /**
      * Get the observation model datas from a nav file name
      * @param $filename filename of the navigation file
@@ -95,7 +104,6 @@ class ObservationModelMapper extends Mapper
         }
     }
 
-
     /**
      * change O&M status on deletion
      * @param $nodeId fileId of the node
@@ -104,5 +112,12 @@ class ObservationModelMapper extends Mapper
     {
         $sql = 'UPDATE *PREFIX*snanny_observation_model SET status = 0, timestamp = :timestamp WHERE file_id = :id';
         DBUtil::executeQuery($sql, array(':timestamp' => time(), ':id' => $nodeId));
+    }
+
+    public function updateOMTime($id)
+    {
+        $sqlUpdateOM = 'UPDATE *PREFIX*snanny_observation_model SET timestamp = :timeUpdate WHERE id = :id';
+        DBUtil::executeQuery($sqlUpdateOM, array(':timeUpdate' => time(), ':id' => $id));
+
     }
 }

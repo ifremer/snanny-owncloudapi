@@ -11,12 +11,13 @@ use OCP\Files\FileInfo;
 use OCP\Files\Node;
 use OCP\Util;
 
-
 const UNKNOW = 0;
 const OM = 1;
 const SML = 2;
+const TAR = 3;
 
 const XML = '.xml';
+const CSV = '.csv';
 const TAR = '.tar';
 
 class FileHook
@@ -54,18 +55,19 @@ class FileHook
                 if ($type === SML) {
 
                     $this->sensorMLHook->onUpdateOrCreate($node->getId(), $node->getContent());
+                    $this->getSystemFromFileId($node->getContent());
 
                 } else if ($type === OM) {
 
                     $this->omHook->onUpdateOrCreate($node->getId(), $node->getContent());
 
-                } else if (FileUtil::endsWith($node->getName(), TAR)) {
+                } else if ($type === TAR) {
 
                     $tarContent = TarParser::parse(FileCacheDao::getFullUrl($node->getId()));
                     foreach ($tarContent as $item) {
                         $path = $item['path'];
                         if ($item['file']) {
-                            if (FileUtil::endsWith($path, 'xml')) {
+                            if (FileUtil::endsWith($path, array('xml'))) {
                                 $data = file_get_contents($path);
                                 $xml = new \SimpleXMLElement($data);
                                 if (OMParser::accept($xml)) {
@@ -76,7 +78,8 @@ class FileHook
                             }
                         }
                     }
-
+                } else {
+                    $this->getOMFromDataPath($node->getId());
                 }
             }
         };
@@ -95,7 +98,7 @@ class FileHook
                     $this->sensorMLHook->onDelete($node);
                 } else if ($type === OM) {
                     $this->omHook->onDelete($node);
-                } else if (FileUtil::endsWith($node->getName(), TAR)) {
+                } else if ($type === TAR) {
                     $this->sensorMLHook->onDelete($node);
                 }
             }
@@ -119,8 +122,9 @@ class FileHook
      */
     function getType($node)
     {
-        $xmlFile = FileUtil::endsWith($node->getName(), XML);
+        $xmlFile = FileUtil::endsWith($node->getName(), array(XML));
 
+        $tarFile = FileUtil::endsWith($node->getName(), array(TAR));
 
         if ($xmlFile === true) {
             $xml = new \SimpleXMLElement($node->getContent());
@@ -130,9 +134,60 @@ class FileHook
             } else if (SensorMLParser::accept($xml)) {
                 return SML;
             }
+        } else if ($tarFile === true) {
+            return TAR;
         }
         return UNKNOW;
     }
 
+    function getSystemFromFileId($content) {
+        $sml = SensorMLParser::parse($content);
+        $uuid = $sml['uuid'];
+
+        $observations = $this->omHook->getDirectOM($uuid);
+        if($observations == null && count($observations) === 0) {
+            // Search OM via snannyancestors
+            $this->updateAllOM($uuid);
+        } else {
+            // Update OM
+            $this->omHook->updateOM($observations);
+        }
+    }
+
+    function updateAllOM($uuid) {
+        $childrens = $this->sensorMLHook->getChildren($uuid);
+        if($childrens != null && count($childrens) > 0) {
+            foreach ($childrens as $children) {
+                $childUuid = $children['uuid'];
+                if ($childUuid != $uuid) {
+
+                    // Get OM file with system_uuid = uuid
+                    $om = $this->omHook->getDirectOM($childUuid);
+
+                    // if exist om file -> update
+                    if($om != null) {
+                        $this->omHook->updateOM($om);
+                    }
+
+                    $this->updateAllOM($childUuid);
+                }
+            }
+        }
+    }
+
+    function getOMFromDataPath($fileid) {
+
+        // Get cacheInfo from id
+        $cacheInfo = FileCacheDao::getCacheInfo($fileid);
+
+        // Get name and file path
+        $fileName = $cacheInfo['name'];
+        $fileCachePath = preg_replace('"\.[^\.]*$"', '.xml', $cacheInfo['path']);
+
+        $obs = $this->omHook->getOMByData($fileName, $fileCachePath);
+        if($obs != null) {
+            $this->omHook->updateOM($obs);
+        }
+    }
 
 }

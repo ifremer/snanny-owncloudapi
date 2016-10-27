@@ -269,8 +269,8 @@ class ApiController extends Controller
      * @param $uuid uuid du system
      * @param $from : begin time of system valid period
      * @param $to : end time of system valid period
-     * @param $dir : repertoire du fichier en cour d'édition
-     * @param $fileName : nom du fichier en cours d'édition
+     * @param $dir : repertoire du fichier en cour d'ï¿½dition
+     * @param $fileName : nom du fichier en cours d'ï¿½dition
      * @return DataDisplayResponse|NotFoundResponse Reponse if document exist, otherwise raised exception
      *
      * @NoCSRFRequired
@@ -291,7 +291,7 @@ class ApiController extends Controller
                 $resultFileName = '';
                 $isMoe = false;
 
-                $fileCache = FileCacheDao::getFileCacheByFileId($system->getFileId());
+                $fileCache = FileCacheDao::getCacheInfo($system->getFileId());
                 if ($fileCache !== null) {
                     $fileCachePath = $fileCache['path'];
                     $fileCachePath = str_replace('.tar', '.moe', $fileCachePath);

@@ -118,13 +118,4 @@ class FileCacheDao
         }
         return null;
     }
-
-    public static function getFileCacheByFileId($fileid) {
-        $result = DBUtil::executeQuery('SELECT * FROM *PREFIX*filecache WHERE fileid = :fileid',
-            array(':fileid'=>$fileid));
-        while($row = $result->fetch()){
-            return $row;
-        }
-        return null;
-    }
 }

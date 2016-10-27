@@ -4,6 +4,7 @@
 namespace OCA\SnannyOwncloudApi\Hooks;
 
 
+use OCA\SnannyOwncloudApi\Db\ObservationModelMapper;
 use OCA\SnannyOwncloudApi\Db\System;
 use OCA\SnannyOwncloudApi\Db\SystemAncestor;
 use OCA\SnannyOwncloudApi\Db\SystemAncestorsMapper;
@@ -82,6 +83,10 @@ class DelegateSensorMLHook
                 $this->systemMapper->update($system);
             }
         }
+    }
+
+    public function getChildren($uuid) {
+        return $this->systemAncestorsMapper->getChildren($uuid);
     }
 
     /**
