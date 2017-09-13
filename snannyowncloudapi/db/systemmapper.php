@@ -70,7 +70,10 @@ class SystemMapper extends Mapper
                 }
             }
 
-            $sql = 'SELECT * FROM *PREFIX*snanny_system WHERE uuid = ?' . $startDateQuery . $endDateQuery;
+            //status should be active
+            array_push($params, 1);
+
+            $sql = 'SELECT * FROM *PREFIX*snanny_system WHERE uuid = ?' . $startDateQuery . $endDateQuery. ' and status = ?';
             return $dateStrict ? $this->findEntity($sql, $params) : $this->findEntities($sql, $params);
         } catch (DoesNotExistException $e) {
             return null;

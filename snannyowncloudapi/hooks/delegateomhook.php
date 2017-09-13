@@ -6,6 +6,7 @@ use OCA\SnannyOwncloudApi\Db\DBUtil;
 use OCA\SnannyOwncloudApi\Db\ObservationModel;
 use OCA\SnannyOwncloudApi\Db\ObservationModelMapper;
 use OCA\SnannyOwncloudApi\Parser\OMParser;
+use OCA\SnannyOwncloudApi\Config\Config;
 
 
 class DelegateOmHook

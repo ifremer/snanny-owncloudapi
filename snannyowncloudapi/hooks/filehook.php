@@ -16,9 +16,9 @@ const OM = 1;
 const SML = 2;
 const TAR = 3;
 
-const XML = '.xml';
-const CSV = '.csv';
-const TAR = '.tar';
+const XML_FORMAT = '.xml';
+const CSV_FORMAT = '.csv';
+const TAR_FORMAT = '.tar';
 
 class FileHook
 {
@@ -64,6 +64,7 @@ class FileHook
                 } else if ($type === TAR) {
 
                     $tarContent = TarParser::parse(FileCacheDao::getFullUrl($node->getId()));
+
                     foreach ($tarContent as $item) {
                         $path = $item['path'];
                         if ($item['file']) {
@@ -122,9 +123,9 @@ class FileHook
      */
     function getType($node)
     {
-        $xmlFile = FileUtil::endsWith($node->getName(), array(XML));
+        $xmlFile = FileUtil::endsWith($node->getName(), array(XML_FORMAT));
 
-        $tarFile = FileUtil::endsWith($node->getName(), array(TAR));
+        $tarFile = FileUtil::endsWith($node->getName(), array(TAR_FORMAT));
 
         if ($xmlFile === true) {
             $xml = new \SimpleXMLElement($node->getContent());

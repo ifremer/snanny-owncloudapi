@@ -31,6 +31,10 @@ class Application extends App{
         parent::__construct('snannyowncloudapi', $urlParams);
         $container = $this->getContainer();
 
+        $container->registerService('Logger', function($c){
+            return $c->query('ServerContainer')->getLogger();
+        });
+
         /**ApiController*/
         $container->registerService('ApiController', function($c){
         	return new ApiController(
@@ -85,7 +89,8 @@ class Application extends App{
         	return new FileHook(
                 $c->query('ServerContainer')->getRootFolder(), 
                 $c->query('DelegateSensorMLHook'),
-                $c->query('DelegateOmHook')
+                $c->query('DelegateOmHook'),
+                $c->query('Logger')
                 );
         });
 
