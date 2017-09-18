@@ -25,13 +25,16 @@ class FileHook
     private $fileSystemManager;
     private $sensorMLHook;
     private $omHook;
+    private $logger;
 
 
-    public function __construct($fileSystemManager, DelegateSensorMLHook $sensorMLHook, DelegateOmHook $omHook)
+    public function __construct($fileSystemManager, DelegateSensorMLHook $sensorMLHook, DelegateOmHook $omHook,
+                                Logger $logger)
     {
         $this->fileSystemManager = $fileSystemManager;
         $this->sensorMLHook = $sensorMLHook;
         $this->omHook = $omHook;
+        $this->logger = $logger;
     }
 
     /**
@@ -75,6 +78,8 @@ class FileHook
                                     $this->omHook->onUpdateOrCreate($node->getId(), $data, $item['pharPath']);
                                 } else if (SensorMLParser::accept($xml)) {
                                     $this->sensorMLHook->onUpdateOrCreate($node->getId(), $data, $item['pharPath']);
+                                    //update all observations linked to the sensor
+                                    $this->getSystemFromFileId($data);
                                 }
                             }
                         }
@@ -144,7 +149,6 @@ class FileHook
     function getSystemFromFileId($content) {
         $sml = SensorMLParser::parse($content);
         $uuid = $sml['uuid'];
-
         $observations = $this->omHook->getDirectOM($uuid);
         if($observations == null && count($observations) === 0) {
             // Search OM via snannyancestors
