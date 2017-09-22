@@ -7,10 +7,17 @@ Endpoint : %Owncloud%/apps/snannyowncloudapi/
 
 ## Build and Deploy
 
-Tested with Owncloud 8.2
+Tested with Owncloud 9.1
 
 Copy the snannyowncloudapi folder into your owncloud product in the folder apps
 
+Modify the remote.php file in the owncloud root folder to allow app loading.
+```php
+OC_App::loadApps(array('authentication'));
+OC_App::loadApps(array('filesystem', 'logging'));
+//add the appload here
+OC_App::loadApp('snannyowncloudapi');
+```
 
 ## Install 
 
