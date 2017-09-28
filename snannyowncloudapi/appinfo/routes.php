@@ -44,7 +44,9 @@ return [
         ['name' => 'om#downloadData', 'url' => '/om/{uuid}/stream', 'verb' => 'GET'],
         ['name' => 'om#infoFile', 'url'=>'/data/{nodeId}/info', 'verb'=>'GET'],
         ['name' => 'om#postFile', 'url'=>'/data/{nodeId}', 'verb'=>'POST'],
-        ['name' => 'om#downloadResult', 'url'=>'/data/{uuid}/download', 'verb'=>'GET']
+        ['name' => 'om#downloadResult', 'url'=>'/data/{uuid}/download', 'verb'=>'GET'],
 
+        //user management
+        ['name' => 'user#getUserGroups', 'url' => '/users/{id}/groups', 'verb' => 'GET']
     ]
 ];

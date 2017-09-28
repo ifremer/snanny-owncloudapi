@@ -13,6 +13,7 @@ namespace OCA\SnannyOwncloudApi\AppInfo;
 
 use OCA\SnannyOwncloudApi\Controller\ApiController;
 use OCA\SnannyOwncloudApi\Controller\OmController;
+use OCA\SnannyOwncloudApi\Controller\UserController;
 use OCA\SnannyOwncloudApi\Db\IndexHistoryMapper;
 use OCA\SnannyOwncloudApi\Db\ObservationModelMapper;
 use OCA\SnannyOwncloudApi\Db\SystemAncestorsMapper;
@@ -53,6 +54,13 @@ class Application extends App{
                  $c->query('ObservationModelMapper'),
                  $c->query('IndexHistoryMapper'),
                  $c->query('DelegateOmHook'));
+         });
+
+         $container->registerService('UserController', function($c){
+             return new UserController(
+                 $c->query('AppName'),
+                 $c->query('Request')
+             );
          });
 
          /**Mappers**/
