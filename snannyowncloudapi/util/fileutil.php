@@ -3,6 +3,7 @@
 namespace OCA\SnannyOwncloudApi\Util;
 
 use OCA\SnannyOwncloudApi\Tar\TarParser;
+use OCP\Files;
 
 /**
  * Created by PhpStorm.
@@ -42,5 +43,27 @@ class FileUtil
             return TarParser::PHAR_PROTOCOLE . $path . $pharPath;
         }
         return $path;
+    }
+
+    /**
+     * Get the mime type of the compressed file
+     * @param $file
+     * @return string a mime type corresponding to the archive content. "" if not detected
+     */
+    public static function getArchiveContentMime($file){
+        $filePath = $file['urn'];
+        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+
+        $fileName = '';
+        if($extension === 'bz2' || $extension === 'gz'){
+            $fileName = pathinfo($filePath, PATHINFO_FILENAME);
+        } else if($extension === 'zip'){
+            $zip = new \ZipArchive();
+            if($zip->open($filePath)){
+                $fileName = $zip->getNameIndex(0);
+            }
+        }
+
+        return Files::getMimeType($fileName);
     }
 }

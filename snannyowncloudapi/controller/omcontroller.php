@@ -252,13 +252,16 @@ class OmController extends Controller
      */
     public function postFile($nodeId, $name, $description, $system, $startDate = null, $endDate = null)
     {
-
-
         $node = FileCacheDao::getCacheInfo($nodeId);
         //Get file information (storage urn and user)
         $fileInfo = FileCacheDao::getFileInfo($node['storage'], $node['path']);
 
-        $mimetype = \OC::$server->getMimeTypeLoader()->getMimetypeById($node['mimetype']);
+        if(FileUtil::endsWith($node['name'], array('.bz2', '.gz', '.zip'))){
+            $mimetype = FileUtil::getArchiveContentMime($fileInfo);
+            error_log("found mime :".$mimetype);
+        } else {
+            $mimetype = \OC::$server->getMimeTypeLoader()->getMimetypeById($node['mimetype']);
+        }
         //Fix bug owncloud type mime cause \OC::$server->getMimeTypeLoader()->getMimetypeById($node['mimetype'])
         // Doesn't return correct element
         if ($mimetype == 'application/octet-stream') {
@@ -320,7 +323,6 @@ class OmController extends Controller
         }
         return $content;
     }
-
 
     /**
      * Formats the file info to be returned as JSON to the client.

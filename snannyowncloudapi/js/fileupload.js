@@ -4,6 +4,14 @@
  *
  */
 (function() {
+
+    var extensions = ['.csv','.nc','.nav','.zip','.gz','.bz2'];
+	function isFilenameAcceptable(name){
+        return extensions.some(function(extension){
+            return name.endsWith(extension);
+        });
+    }
+
 	/**
 	 * @namespace
 	 */
@@ -26,9 +34,7 @@
 			if (result[0] && result[0].status === 'success') {
 				var name = result[0].name;
 				var check = false;
-				if (name.endsWith('.csv')) {
-					OCA.SnannyOwncloudAPI.ObservationUpload.metas(result[0]);
-				} else if (name.endsWith('.nc') || name.endsWith('.nav')) {
+				if (isFilenameAcceptable(name)) {
 					OCA.SnannyOwncloudAPI.ObservationUpload.metas(result[0]);
 				}
 			}
