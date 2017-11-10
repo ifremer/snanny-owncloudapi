@@ -19,7 +19,18 @@ class SensorMLParser
 
         $sml = $xml->children(XMLNamespace::SML_NAMESPACE);
         if ($sml != null) {
-            $arr['uuid'] = $sml->identification->IdentifierList->identifier->Term->value;
+
+            $arr['identifiers'] = array();
+            $sml->registerXPathNamespace('s', XMLNamespace::SML_NAMESPACE);
+            $identifiers = $sml->xpath('//s:identification/s:IdentifierList/s:identifier/s:Term[./s:label != \'UUID\']');
+            foreach ($identifiers as $identifier){
+                $node = $identifier->children(XMLNamespace::SML_NAMESPACE);
+                //keep trim() as a convenient method which cast the node content into string.
+                $arr['identifiers'][] = array(
+                    'name' => trim($node->label),
+                    'identifier' => trim($node->value)
+                );
+            }
 
             $gml = $xml->children(XMLNamespace::GML_NAMESPACE);
 
@@ -70,6 +81,18 @@ class SensorMLParser
             $resultDate = new \DateTime($smlDate);
         }
         return $resultDate == null ? $resultDate : $resultDate->getTimestamp();
+    }
+
+    public static function getUUID($content){
+        $xml = new \SimpleXMLElement($content);
+        $sml = $xml->children(XMLNamespace::SML_NAMESPACE);
+
+        if($sml != null){
+            $sml->registerXPathNamespace('s', XMLNamespace::SML_NAMESPACE);
+            $value = $sml->xpath('//s:identification/s:IdentifierList/s:identifier/s:Term[./s:label = \'UUID\']/s:value');
+            $uuid = trim($value[0]);
+        }
+        return $uuid;
     }
 
 }

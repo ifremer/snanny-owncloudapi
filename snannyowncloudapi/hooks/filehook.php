@@ -147,8 +147,7 @@ class FileHook
     }
 
     function getSystemFromFileId($content) {
-        $sml = SensorMLParser::parse($content);
-        $uuid = $sml['uuid'];
+        $uuid = SensorMLParser::getUUID($content);
         $observations = $this->omHook->getDirectOM($uuid);
         if($observations == null && count($observations) === 0) {
             // Search OM via snannyancestors

@@ -17,6 +17,7 @@ use OC\Share\Share;
 use OCA\SnannyOwncloudApi\Db\ActivityDao;
 use OCA\SnannyOwncloudApi\Db\FileCacheDao;
 use OCA\SnannyOwncloudApi\Db\SystemAncestorsMapper;
+use OCA\SnannyOwncloudApi\Db\SystemIdentifiersMapper;
 use OCA\SnannyOwncloudApi\Db\SystemMapper;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDisplayResponse;
@@ -29,12 +30,15 @@ class ApiController extends Controller
 
     private $systemMapper;
     private $ancestorsMapper;
+    private $identifiersMapper;
 
-    public function __construct($AppName, IRequest $request, SystemMapper $systemMapper, SystemAncestorsMapper $ancestorsMapper)
+    public function __construct($AppName, IRequest $request, SystemMapper $systemMapper, SystemAncestorsMapper $ancestorsMapper,
+        SystemIdentifiersMapper $systemIdentifiersMapper)
     {
         parent::__construct($AppName, $request);
         $this->systemMapper = $systemMapper;
         $this->ancestorsMapper = $ancestorsMapper;
+        $this->identifiersMapper = $systemIdentifiersMapper;
     }
 
 
@@ -322,5 +326,17 @@ class ApiController extends Controller
         }
 
         return new JSONResponse($data);
+    }
+
+    /**
+     * Look for an uuid of a system from an other internal identifier
+     * @param $id
+     * @return JSONResponse list of sml uuid. an empty list if none found
+     * @NoCSRFRequired
+     * @NoAdminRequired
+     */
+    public function searchUUID($id){
+        $results = $this->identifiersMapper->getUUIDByIdentifier($id);
+        return new JSONResponse($results);
     }
 }

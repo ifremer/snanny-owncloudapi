@@ -258,7 +258,6 @@ class OmController extends Controller
 
         if(FileUtil::endsWith($node['name'], array('.bz2', '.gz', '.zip'))){
             $mimetype = FileUtil::getArchiveContentMime($fileInfo);
-            error_log("found mime :".$mimetype);
         } else {
             $mimetype = \OC::$server->getMimeTypeLoader()->getMimetypeById($node['mimetype']);
         }

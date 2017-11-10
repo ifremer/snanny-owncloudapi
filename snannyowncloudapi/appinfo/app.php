@@ -17,6 +17,7 @@ use OCA\SnannyOwncloudApi\Controller\UserController;
 use OCA\SnannyOwncloudApi\Db\IndexHistoryMapper;
 use OCA\SnannyOwncloudApi\Db\ObservationModelMapper;
 use OCA\SnannyOwncloudApi\Db\SystemAncestorsMapper;
+use OCA\SnannyOwncloudApi\Db\SystemIdentifiersMapper;
 use OCA\SnannyOwncloudApi\Db\SystemMapper;
 use OCA\SnannyOwncloudApi\Hooks\DelegateOmHook;
 use OCA\SnannyOwncloudApi\Hooks\DelegateSensorMLHook;
@@ -27,83 +28,91 @@ use OCP\AppFramework\App;
 use OCP\Util;
 
 
-class Application extends App{
-	 public function __construct(array $urlParams=array()){
+class Application extends App
+{
+    public function __construct(array $urlParams = array())
+    {
         parent::__construct('snannyowncloudapi', $urlParams);
         $container = $this->getContainer();
 
-        $container->registerService('Logger', function($c){
+        $container->registerService('Logger', function ($c) {
             return $c->query('ServerContainer')->getLogger();
         });
 
         /**ApiController*/
-        $container->registerService('ApiController', function($c){
-        	return new ApiController(
-        		$c->query('AppName'),
+        $container->registerService('ApiController', function ($c) {
+            return new ApiController(
+                $c->query('AppName'),
                 $c->query('Request'),
                 $c->query('SystemMapper'),
-                $c->query('SystemAncestorsMapper'));
+                $c->query('SystemAncestorsMapper'),
+                $c->query('SystemIdentifiersMapper'));
         });
 
 
-         /**OmController*/
-         $container->registerService('OmController', function($c){
-             return new OmController(
-                 $c->query('AppName'),
-                 $c->query('Request'),
-                 $c->query('ObservationModelMapper'),
-                 $c->query('IndexHistoryMapper'),
-                 $c->query('DelegateOmHook'));
-         });
+        /**OmController*/
+        $container->registerService('OmController', function ($c) {
+            return new OmController(
+                $c->query('AppName'),
+                $c->query('Request'),
+                $c->query('ObservationModelMapper'),
+                $c->query('IndexHistoryMapper'),
+                $c->query('DelegateOmHook'));
+        });
 
-         $container->registerService('UserController', function($c){
-             return new UserController(
-                 $c->query('AppName'),
-                 $c->query('Request')
-             );
-         });
+        $container->registerService('UserController', function ($c) {
+            return new UserController(
+                $c->query('AppName'),
+                $c->query('Request')
+            );
+        });
 
-         /**Mappers**/
-        $container->registerService('SystemMapper', function($c) {
+        /**Mappers**/
+        $container->registerService('SystemMapper', function ($c) {
             return new SystemMapper($c->query('ServerContainer')->getDb());
         });
-        $container->registerService('SystemAncestorsMapper', function($c) {
+        $container->registerService('SystemAncestorsMapper', function ($c) {
             return new SystemAncestorsMapper($c->query('ServerContainer')->getDb());
         });
-         $container->registerService('ObservationModelMapper', function($c) {
-             return new ObservationModelMapper($c->query('ServerContainer')->getDb());
-         });
+        $container->registerService('SystemIdentifiersMapper', function ($c) {
+            return new SystemIdentifiersMapper($c->query('ServerContainer')->getDb());
+        });
+        $container->registerService('ObservationModelMapper', function ($c) {
+            return new ObservationModelMapper($c->query('ServerContainer')->getDb());
+        });
 
-         $container->registerService('IndexHistoryMapper', function($c) {
-             return new IndexHistoryMapper($c->query('ServerContainer')->getDb());
-         });
+        $container->registerService('IndexHistoryMapper', function ($c) {
+            return new IndexHistoryMapper($c->query('ServerContainer')->getDb());
+        });
 
-         //Delegate Hook
-         $container->registerService('DelegateOmHook', function($c){
-             return new DelegateOmHook(
-                 $c->query('ObservationModelMapper')
-             );
-         });
+        //Delegate Hook
+        $container->registerService('DelegateOmHook', function ($c) {
+            return new DelegateOmHook(
+                $c->query('ObservationModelMapper')
+            );
+        });
 
-         $container->registerService('DelegateSensorMLHook', function($c){
-             return new DelegateSensorMLHook(
-                 $c->query('SystemMapper'),
-                 $c->query('SystemAncestorsMapper')
-             );
-         });
+        $container->registerService('DelegateSensorMLHook', function ($c) {
+            return new DelegateSensorMLHook(
+                $c->query('SystemMapper'),
+                $c->query('SystemAncestorsMapper'),
+                $c->query('SystemIdentifiersMapper')
+            );
+        });
 
-         // Hooks
-        $container->registerService('FileHook', function($c){
-        	return new FileHook(
-                $c->query('ServerContainer')->getRootFolder(), 
+        // Hooks
+        $container->registerService('FileHook', function ($c) {
+            return new FileHook(
+                $c->query('ServerContainer')->getRootFolder(),
                 $c->query('DelegateSensorMLHook'),
                 $c->query('DelegateOmHook'),
                 $c->query('Logger')
-                );
+            );
         });
 
     }
 }
+
 $app = new Application();
 $app->getContainer()->query('FileHook')->register();
 

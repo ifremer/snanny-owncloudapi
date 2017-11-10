@@ -4,10 +4,12 @@
 namespace OCA\SnannyOwncloudApi\Hooks;
 
 
-use OCA\SnannyOwncloudApi\Db\ObservationModelMapper;
 use OCA\SnannyOwncloudApi\Db\System;
 use OCA\SnannyOwncloudApi\Db\SystemAncestor;
 use OCA\SnannyOwncloudApi\Db\SystemAncestorsMapper;
+use OCA\SnannyOwncloudApi\Db\SystemIdentifier;
+use OCA\SnannyOwncloudApi\Db\SystemIdentifiersMapper;
+
 use OCA\SnannyOwncloudApi\Db\SystemMapper;
 use OCA\SnannyOwncloudApi\Parser\SensorMLParser;
 
@@ -21,10 +23,12 @@ class DelegateSensorMLHook
      * @param SystemMapper $systemMapper
      * @param SystemAncestorsMapper $systemAncestorsMapper
      */
-    public function __construct(SystemMapper $systemMapper, SystemAncestorsMapper $systemAncestorsMapper)
+    public function __construct(SystemMapper $systemMapper, SystemAncestorsMapper $systemAncestorsMapper,
+                                SystemIdentifiersMapper $systemIdentifiersMapper)
     {
         $this->systemMapper = $systemMapper;
         $this->systemAncestorsMapper = $systemAncestorsMapper;
+        $this->systemIdenfiersMapper = $systemIdentifiersMapper;
     }
 
     /**
@@ -35,18 +39,21 @@ class DelegateSensorMLHook
     public function onUpdateOrCreate($fileId, $content, $pharPath = null)
     {
         $sml = SensorMLParser::parse($content);
-        $uuid = $sml['uuid'];
+        $uuid = SensorMLParser::getUUID($content);
         if ($uuid) {
             $startDate = $sml['startDate'];
             $endDate = $sml['endDate'];
             $this->systemAncestorsMapper->deleteChildren($uuid, $startDate, $endDate);
+            $this->systemIdenfiersMapper->deleteBySystemUuid($uuid);
+
+            //adding system ancestors
             $components = $sml['components'];
             if ($components) {
                 //IF data is not unique, there is no link created between ancestors and children
                 if($this->ensureUnique($components)) {
                     foreach ($components as $component) {
                         $systemAncestor = new SystemAncestor();
-                        $systemAncestor->setParentUuid($sml['uuid']);
+                        $systemAncestor->setParentUuid($uuid);
                         $systemAncestor->setParentName($sml['name']);
                         $systemAncestor->setComponentName($component['name']);
                         $systemAncestor->setStatus(true);
@@ -55,6 +62,18 @@ class DelegateSensorMLHook
                         $systemAncestor->setParentEndDate($endDate);
                         $this->systemAncestorsMapper->insert($systemAncestor);
                     }
+                }
+            }
+
+            //adding system identifiers
+            $identifiers = $sml['identifiers'];
+            if($identifiers && count($identifiers) !== 0){
+                foreach ($identifiers as $identifier){
+                    $systemIdentifier = new SystemIdentifier();
+                    $systemIdentifier->setSystemUuid($uuid);
+                    $systemIdentifier->setName($identifier['name']);
+                    $systemIdentifier->setIdentifier($identifier['identifier']);
+                    $this->systemIdenfiersMapper->insert($systemIdentifier);
                 }
             }
 
