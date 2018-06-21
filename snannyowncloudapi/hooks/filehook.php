@@ -28,13 +28,11 @@ class FileHook
     private $logger;
 
 
-    public function __construct($fileSystemManager, DelegateSensorMLHook $sensorMLHook, DelegateOmHook $omHook,
-                                Logger $logger)
+    public function __construct($fileSystemManager, DelegateSensorMLHook $sensorMLHook, DelegateOmHook $omHook)
     {
         $this->fileSystemManager = $fileSystemManager;
         $this->sensorMLHook = $sensorMLHook;
         $this->omHook = $omHook;
-        $this->logger = $logger;
     }
 
     /**
@@ -42,6 +40,18 @@ class FileHook
      */
     public static function onLoadFilesAppScripts()
     {
+        Util::addScript('snannyowncloudapi', 'fileupload_chimie');
+        Util::addScript('snannyowncloudapi', 'fileupload_original');
+        Util::addScript('snannyowncloudapi', 'fileupload_marinet');
+        Util::addScript('snannyowncloudapi', 'fileupload_bathy');
+        Util::addScript('snannyowncloudapi', 'awesomplete');
+        Util::addScript('snannyowncloudapi', 'datatables.min');
+        Util::addScript('snannyowncloudapi', 'xml_to_json');
+        Util::addScript('snannyowncloudapi', 'bzip2');
+
+        // pour les fichiers zip
+        // Util::addScript('snannyowncloudapi', 'jszip.min');
+
         Util::addScript('snannyowncloudapi', 'tabview');
         Util::addScript('snannyowncloudapi', 'filesplugin');
         Util::addScript('snannyowncloudapi', 'fileupload');

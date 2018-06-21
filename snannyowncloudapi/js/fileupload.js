@@ -5,13 +5,12 @@
  */
 (function() {
 
-    var extensions = ['.csv','.nc','.nav','.zip','.gz','.bz2'];
+	var extensions = ['.csv','.txt','.xyz','.nc','.nav','.zip','.gz','.bz2'];
 	function isFilenameAcceptable(name){
-        return extensions.some(function(extension){
-            return name.endsWith(extension);
-        });
-    }
-
+		return extensions.some(function(extension){
+	    	return name.endsWith(extension);
+		});
+	}
 	/**
 	 * @namespace
 	 */
@@ -29,202 +28,101 @@
 		 * @param data file uploaded with success
 		 */
 		done: function(e, data) {
-			//When all done 
+			//When all done
 			var result = JSON.parse(data.response().result);
+
+			var groupe_test = ["groupe_marinet","groupe_bathy","groupe_chimie"];
+
 			if (result[0] && result[0].status === 'success') {
 				var name = result[0].name;
-				var check = false;
-				if (isFilenameAcceptable(name)) {
-					OCA.SnannyOwncloudAPI.ObservationUpload.metas(result[0]);
-				}
-			}
-		},
-
-		metas: function(item) {
-			urlGen = OC.generateUrl('/apps/snannyowncloudapi/data/' + item.id + '/info');
-			var that = OCA.SnannyOwncloudAPI.ObservationUpload;
-			$.ajax({
-				type: 'GET',
-				url: urlGen,
-				dataType: 'json',
-				success: function(response) {
-					if (response.status === 'failure') {
-						that.prompt(item);
-					}
-				},
-			});
-		},
-
-
-
-		prompt: function(item) {
-			$.when(OCA.TemplateUtil.getTemplate('snannyowncloudapi', 'om_descriptor.html')).then(function($tmpl) {
-				var dialogName = 'oc-dialog-' + OCdialogs.dialogsCounter + '-content';
-				var dialogId = '#' + dialogName;
-				var $dlg = $tmpl.octemplate({
-					dialog_name: dialogName,
-					filename: item.name,
-					icon: item.icon
-				});
-
-				var functionToCall = function() {
-					var dialog = $(dialogId);
-					var form = [dialog.find('#observationName'), dialog.find('#observationDesc'), dialog.find('#observationSystem')];
-					if (OCA.SnannyOwncloudAPI.ObservationUpload._validate(form, dialogId)) {
-						var _data = OCA.TemplateUtil.extractData(dialog);
-						OCA.SnannyOwncloudAPI.ObservationUpload._send(item.id, _data, function(result) {
-							$(dialogId).ocdialog('close');
-							FileList.add(result, {});
-							FileList.highlightFiles([result.name]);
-						});
-					}
-				};
-				var that = OCA.SnannyOwncloudAPI.ObservationUpload;
-				var dialogItem = {'id':dialogId, 'tmpl':$dlg, 'callback':functionToCall, 'item':item};
-				if (that._currentDialog) {
-					that._prompt.push(dialogItem);
-				} else {
-					that._showDialog(dialogItem);
-				}
-				OCdialogs.dialogsCounter++;
-			});
-		},
-
-		_showDialog: function(dialog){
-			var dialogId = dialog.id;
-			this._currentDialog = dialogId;
-			var buttonlist = [];
-			buttonlist[0] = {
-				text: t('core', 'Ok'),
-				click: dialog.callback,
-				defaultButton: true
-			};
-
-			$('body').append(dialog.tmpl);
-			$(dialogId).ocdialog({
-				closeOnEscape: true,
-				modal: true,
-				buttons: buttonlist,
-				close:function(){
-					$(dialogId).remove();
-					OCA.SnannyOwncloudAPI.ObservationUpload._showNext();
-				}
-			});
-
-			var titleSpan = $(dialogId).parent().children('.oc-dialog-title');
-			titleSpan.text(n('snannyowncloudapi',
-				'No observation model found for file {file}',
-				'No observation model found for file {file}',
-				1, {
-					file: dialog.item.name
-				}
-			));
-
-			var onChangeOrSelect = function (event, ui) {
-
-			    	var selected = ui.item;
-			    	if(selected){
-			    		$('#system').val(selected.uuid);
-						$('#startDate').val(selected.startDate);
-						$('#endDate').val(selected.endDate);
-						$("#searchNotFound").toggleClass("hidden", true);
-			   		}else{
-			   			$('#system').val('');
-			   			$('#startDate').val('');
-			   			$('#endDate').val('');
-						$("#searchNotFound").toggleClass("hidden", true);
-			   		}
-			    };
-
-
-			$(dialogId).find("#observationSystem").autocomplete({
-			    serviceUrl:  OC.generateUrl('/apps/snannyowncloudapi/systems'),
-			    change: onChangeOrSelect,
-			    select: onChangeOrSelect,
-			    source:function(request, response){
-			    	var searchParam  = {'term':request.term};
-					$.ajax({
-				        url: OC.generateUrl('/apps/snannyowncloudapi/sml'),
-						delay: 300,
-				        data : searchParam,
-				        dataType: "json",
-				        type: "POST",
-				        success: function (data) {
-				        	if(data.length>0){
-				        		$("#searchNotFound").toggleClass("hidden", true);
-					            response($.map(data, function(item) {
-									var label = item.label;
-									var startLabel = '';
-									var endLabel = '';
-									if(item.startDate !== null || item.endDate !== null) {
-										startLabel = ' [';
-										endLabel = ']';
-										if(item.startDate !== null) {
-											startLabel = startLabel +  new Date(parseInt(item.startDate) * 1000).toLocaleString() + ',';
-										}
-										if(item.endDate !== null) {
-											endLabel = ' ' + new Date(parseInt(item.endDate) * 1000).toLocaleString() + endLabel;
+				// Permet de savoir à quel groupe appartient l'utilisateur
+				$.ajax({
+					type: 'GET',
+					// url: 'http://rbalanch:stargate3992@localhost/owncloud/ocs/v1.php/cloud/users/'+oc_current_user+'/groups',
+					url: 'http://admin:12345678@visi-snanny-datacloud.ifremer.fr/owncloud/ocs/v1.php/cloud/users/'+oc_current_user+'/groups',
+					success: function(response) {
+						// $.getScript("../../../apps/snannyowncloudapi/js/xml_to_json.js")
+						// .done(function( script, textStatus ) {
+							var groups_list = xmlToJson(response);
+							if(Array.isArray(groups_list.ocs.data.groups.element)){ // si c'est un tableau
+								if(confirm("voulez-vous upload ce fichier en tant que membre du groupe : "+groupe_test[0]+" ?")){
+									for(var i = 0;typeof groups_list.ocs.data.groups.element[i] != 'undefined';i++){
+										if(groups_list.ocs.data.groups.element[i] == groupe_test[0]){ // Marinet
+											if (isFilenameAcceptable(name)) {
+												// $.getScript("../../../apps/snannyowncloudapi/js/fileupload_marinet.js")
+												// .done(function( script, textStatus ) {
+													OCA.SnannyOwncloudAPI.ObservationUpload_marinet.metas(result[0], e, data);
+												// });
+											}
 										}
 									}
-									label = label + startLabel + endLabel;
-
-					                return { 
-					                    label: label,
-					                    uuid: item.uuid,
-										startDate: item.startDate,
-										endDate: item.endDate
-					                 };
-					            }));
-				        	}else{
-								$("#searchNotFound").toggleClass("hidden", false);
-								response(null);
-				        	}
-				        }
-				    });
-				}
-			});
-		},
-
-		_showNext: function(){
-			var value = this._prompt.pop();
-			if(value){
-				this._showDialog(value);
-			}else{
-				this._currentDialog = undefined;
+								}
+								else if(confirm("voulez-vous upload ce fichier en tant que membre du groupe : "+groupe_test[1]+" ?")){
+									for(var i = 0;typeof groups_list.ocs.data.groups.element[i] != 'undefined';i++){
+										if(groups_list.ocs.data.groups.element[i] == groupe_test[1]){ // Bathy
+											if (isFilenameAcceptable(name)) {
+												// $.getScript("../../../apps/snannyowncloudapi/js/fileupload_marinet.js")
+												// .done(function( script, textStatus ) {
+													OCA.SnannyOwncloudAPI.ObservationUpload_bathy.metas(result[0], e, data);
+												// });
+											}
+										}
+									}
+								}
+								else if(confirm("voulez-vous upload ce fichier en tant que membre du groupe : "+groupe_test[2]+" ?")){
+									for(var i = 0;typeof groups_list.ocs.data.groups.element[i] != 'undefined';i++){
+										if(groups_list.ocs.data.groups.element[i] == groupe_test[2]){ // Chimie
+											if (isFilenameAcceptable(name)) {
+												// $.getScript("../../../apps/snannyowncloudapi/js/fileupload_chimie.js")
+												// .done(function( script, textStatus ) {
+													OCA.SnannyOwncloudAPI.ObservationUpload_chimie.metas(result[0], e, data);
+												// });
+											}
+										}
+									}
+								}
+							}
+							else{ // sinon c'est pas un tableau							
+								if(groups_list.ocs.data.groups.element == groupe_test[0]){ // Marinet
+									if (isFilenameAcceptable(name)) {
+										// $.getScript("../../../apps/snannyowncloudapi/js/fileupload_marinet.js")
+										// .done(function( script, textStatus ) {
+											OCA.SnannyOwncloudAPI.ObservationUpload_marinet.metas(result[0], e, data);
+										// });
+									}
+								}
+								else if(groups_list.ocs.data.groups.element == groupe_test[1]){ // Bathy
+									if (isFilenameAcceptable(name)) {
+										// $.getScript("../../../apps/snannyowncloudapi/js/fileupload_bathy.js")
+										// .done(function( script, textStatus ) {
+											OCA.SnannyOwncloudAPI.ObservationUpload_bathy.metas(result[0], e, data);
+										// });
+									}
+								}
+								else if(groups_list.ocs.data.groups.element == groupe_test[2]){ // Chimie
+									if (isFilenameAcceptable(name)) {
+										// $.getScript("../../../apps/snannyowncloudapi/js/fileupload_chimie.js")
+										// .done(function( script, textStatus ) {
+											OCA.SnannyOwncloudAPI.ObservationUpload_chimie.metas(result[0], e, data);
+										// });
+									}
+								}								
+								else{
+									// $.getScript("../../../apps/snannyowncloudapi/js/fileupload_original.js")
+									// .done(function( script, textStatus ) {
+										OCA.SnannyOwncloudAPI.ObservationUpload_original.metas(result[0], e, data); // SensorNanny
+									// });
+								}
+							}
+						// })
+						// .fail(function(jqxhr, settings, exception){
+						// 	alert("Le fichier xml_to_json.js n'a pas été trouvé");
+						// });
+					}
+				});
 			}
-		},
-
-		_send: function(id, data, callback) {
-			urlGen = OC.generateUrl('/apps/snannyowncloudapi/data/' + id);
-			$.ajax({
-				type: 'POST',
-				url: urlGen,
-				dataType: 'json',
-				data: data,
-				success: callback,
-				error : function(response){
-					$(dialogId).find('errorMsg').html("unable to create O&M metadata")
-				}
-			});
-		},
-
-		_validate: function(inputs, dialogId) {
-			var result = true;
-			$.each(inputs, function(idx, entry) {
-				if (entry.val() === '') {
-					OCA.TemplateUtil.displayError(entry, 'Required field');
-					result = false;
-				}
-			});
-			if($(dialogId).find("#system").val() === ''){
-				OCA.TemplateUtil.displayError($("#observationSystem"), 'Required field');
-				result = false;
-			}
-			return result;
 		}
-
 	};
-
 	OCA.SnannyOwncloudAPI = OCA.SnannyOwncloudAPI || {};
 	OCA.SnannyOwncloudAPI.ObservationUpload = ObservationUpload;
 })();

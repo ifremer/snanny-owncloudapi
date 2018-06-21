@@ -1,0 +1,92 @@
+<div id="{dialog_name}" title="Title" class="observationModel wizard_size">
+    <form action="#" id="observationForm">
+        <!-- Affichage des différents éléments à renseigner -->
+        <div>
+            <label>file : {filename}</label>
+            <br/>
+            <label>Step :<label id="id_page"></label>/3</label>
+        </div>
+        <div id="id_informations">
+            <div class="wizard_title">Describe your observation :</div>
+            <div>
+                <span class="svg icon"><img src="{icon}"/></span>        
+                <input type="hidden" id="filename" value={filename}/>     
+            </div>
+            <div id="id_name_observation"><label>Name* : </label><input type="text" id="observationName" name="name" maxlength="300" required/></div>
+            <div id="id_description_observation">
+                <label>Description* :</label><br/>
+                <textarea id="observationDesc" name="description" maxlength="2000"/>
+            </div>
+            <div id="id_system_observation">
+                <label>Acquisition system* : <span class="help">Search a system by its name</span></label>
+                <input type="search" id="observationSystem" name="systemDisplay" maxlength="60" placeholder="Search..." required/>
+                <div><span id="searchNotFound" class="searchNotFound hidden">No system found with this terms, please refine your search</span></div>
+                <input type="hidden" id="startDate" name="startDate"/>
+                <input type="hidden" id="endDate" name="endDate"/>
+                <input type="hidden" id="system" name="system"/>
+            </div>
+        </div>
+        <!-- Affichage des différents séparateurs -->
+        <div id="id_delimiters">
+            <div class="wizard_title">Select your delimeters :</div>
+            <div><label>Delimeters :</label></div>
+            <input type="checkbox" id="checkbox_tab" name="checkbox" value='\t' style="width:5%;"/>
+            <span id="name_tab">tab</span>
+            <!-- <br/> -->
+            <input type='checkbox' id="checkbox_comma" name='checkbox' value=',' style="width:5%;"/>
+            <span id="name_comma">comma ","</span>
+            <!-- <br/> -->
+            <input type='checkbox' id="checkbox_space" name='checkbox' value=' ' style="width:5%;"/>
+            <span id="name_space">space</span>
+            <br class="test_display_br"/>
+            <input type='checkbox' id="checkbox_semi_column" name='checkbox' value=';' style="width:5%;"/>
+            <span id="name_semi_column">semi_column ";"</span>
+            <!-- <br/> -->
+            <input type='checkbox' id="checkbox_other" name='checkbox' value='other' style="width:5%;"/>
+            <span id="name_other">other :</span>
+            <!-- <input id="value_other" name="value_other" style="width:20%; display:none"/> -->
+            <input id="value_other" name="value_other" style="width:20%"/>
+            <br/>
+        </div>
+        <!-- Affichage du tableau -->
+        <div id="id_entete_etape3" class="wizard_title" style="display:none">
+            Identify your columns :
+            <br/>
+            <input type="button" id="button_new_line" value="Ajouter une ligne pour mettre des titres aux colonnes" style="background-color: #1d2d44; color: white">
+            <input type="button" id="button_delete_line" value="Supprimer la ligne ajoutée" style="display: none; background-color: #1d2d44; color: white">
+        </div>
+        <div id="id_table">
+            <div><label>Content of file :</label></div>
+            <link rel='stylesheet' type='text/css' href='datatables.min.css'/>
+            <!-- <pre id="fileDisplayArea" style="display:none"></pre> -->
+            <textarea readonly id="fileDisplayArea" name="fileDisplayArea" style="display:none" class="scrolling_textarea"/>
+            <table id="preview_table" class="table_cells" bgcolor="white" >
+            <table id="table_save_parameter" style="display:none"/>
+            </table>
+        </div>
+        <!-- Affichage des éléments à saisir pour avoir les parametres et leurs unités -->   
+        <div id=id_box_parameters>     
+            <div class="bootstrap_size">
+                <label>Selected box : </label><pre id="id_selected_box" disabled="disabled" style="display:initial"></pre>
+                <!-- Rounded switch -->
+                <label class="affichage_droite">&nbsp; parameters</label> <!-- gauche -->
+                <label class="switch affichage_droite"><input type="checkbox" id="id_switch_checkbox"><span class="slider round"></span></label>
+                <label class="affichage_droite">bassin search &nbsp;</label> <!-- droite -->
+                <div id="id_one_parameter" style="display:initial">
+                    <div><label>Bassin :</label></div>
+                    <input type="search" id="id_bassin" name="name_bassin" placeholder="Search bassin..." class="wizard_size test_height"/>
+                    <input id="image_bassin" type="image" style="display:none">
+                </div>
+                <div id="id_multiple_parameters" style="display:none">
+                    <div><label>frequence : </label></div>
+                    <input type="text" id="frequence" name="frequence" maxlength="10"/>
+                    <div><label>Unit :</label></div>
+                    <input type="search" id="id_unit" name="name_unit" placeholder="Search unit..." class="wizard_size test_height"/>
+                    <div><label>Paramètre de l'essai :</label></div>
+                    <input type="search" id="id_parameter_essai" name="name_parameter_essai" placeholder="Search parameter for the test..." class="wizard_size test_height"/>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div><span class="error" id="errorMsg"></span></div>
+</div>
